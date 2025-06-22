@@ -150,6 +150,8 @@ def leaderboard_fan_view(request, fan_pk):
 
 # Ganti fungsi laporan_akademik yang lama dengan versi upgrade ini
 
+# Ganti fungsi laporan_akademik yang lama dengan versi upgrade ini
+
 def laporan_akademik(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -241,3 +243,64 @@ def daftar_sks_view(request):
     semua_sks = SKS.objects.select_related('fan').order_by('fan__urutan', 'nama_sks')
     konteks = { 'page_title': 'Daftar SKS Kurikulum', 'semua_sks': semua_sks }
     return render(request, 'core/daftar_sks.html', konteks)
+# Ganti fungsi laporan_rekap_detail yang lama dengan ini
+def laporan_rekap_detail(request):
+    # Ambil semua parameter dari URL
+    category = request.GET.get('category')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    # Siapkan variabel awal
+    santri_list = Santri.objects.none() # QuerySet kosong sebagai default
+    page_title = f'Detail Kategori: {category.replace("_", " ").title()}'
+    
+    # Pastikan tanggalnya valid sebelum melakukan query
+    try:
+        start_date = date.fromisoformat(start_date_str)
+        end_date = date.fromisoformat(end_date_str)
+        tes_dalam_periode = RiwayatTes.objects.filter(tanggal_tes__range=[start_date, end_date])
+
+        # Logika IF/ELSE untuk setiap kategori
+        if category == 'pendaftaran_tes':
+            # Ambil semua santri yang melakukan tes di periode ini
+            santri_ids = tes_dalam_periode.values_list('santri_id', flat=True).distinct()
+            santri_list = Santri.objects.filter(id__in=santri_ids)
+
+        elif category == 'lulus':
+            # Ambil santri yang punya tes LULUS di periode ini
+            santri_ids = tes_dalam_periode.filter(nilai__gte=F('sks__nilai_minimal')).values_list('santri_id', flat=True).distinct()
+            santri_list = Santri.objects.filter(id__in=santri_ids)
+            
+        elif category == 'gugur':
+            # Ambil santri yang punya tes GUGUR di periode ini
+            santri_ids = tes_dalam_periode.filter(nilai__lt=F('sks__nilai_minimal')).values_list('santri_id', flat=True).distinct()
+            santri_list = Santri.objects.filter(id__in=santri_ids)
+            
+        elif category == 'naik_fan':
+            # Ambil santri yang MENYELESAIKAN Fan di periode ini
+            santri_naik_fan_ids = set()
+            semua_santri_aktif = Santri.objects.filter(status='Aktif')
+            for santri in semua_santri_aktif:
+                sks_lulus_ids = santri.get_sks_lulus_ids()
+                for fan in Fan.objects.all():
+                    sks_in_fan = SKS.objects.filter(fan=fan)
+                    if sks_in_fan.exists() and sks_in_fan.filter(id__in=sks_lulus_ids).count() == sks_in_fan.count():
+                        try:
+                            tanggal_selesai = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
+                            if start_date <= tanggal_selesai <= end_date:
+                                santri_naik_fan_ids.add(santri.id)
+                        except RiwayatTes.DoesNotExist:
+                            pass
+            santri_list = Santri.objects.filter(id__in=list(santri_naik_fan_ids))
+
+    except (ValueError, TypeError):
+        # Jika format tanggal salah, biarkan santri_list kosong
+        pass
+    
+    konteks = {
+        'page_title': page_title,
+        'santri_list': santri_list.order_by('nama_lengkap'),
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+    }
+    return render(request, 'core/laporan_rekap_detail.html', konteks)
