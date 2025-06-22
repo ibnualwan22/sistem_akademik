@@ -6,6 +6,11 @@ from django.db.models import Count, Q, F, Max, Min, Avg
 from .models import Santri, RiwayatTes, SKS, Fan
 from datetime import date, timedelta
 import json
+# core/views.py
+import logging
+
+logger = logging.getLogger(__name__)  # __name__ otomatis = 'core.views'
+
 
 # ==============================================================================
 # FUNGSI 1: DASHBOARD UTAMA
@@ -150,8 +155,6 @@ def leaderboard_fan_view(request, fan_pk):
 
 # Ganti fungsi laporan_akademik yang lama dengan versi upgrade ini
 
-# Ganti fungsi laporan_akademik yang lama dengan versi upgrade ini
-
 def laporan_akademik(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -159,7 +162,7 @@ def laporan_akademik(request):
     # Tentukan rentang tanggal default (misal: 1 bulan terakhir) jika tidak ada input
     if not start_date_str and not end_date_str:
         end_date = date.today()
-        start_date = end_date - timedelta(days=30)
+        start_date = end_date - timedelta(days=90)
         start_date_str = start_date.isoformat()
         end_date_str = end_date.isoformat()
     
@@ -170,7 +173,8 @@ def laporan_akademik(request):
     except (ValueError, TypeError):
         # Jika ada error atau tanggal kosong, gunakan rentang default
         end_date = date.today()
-        start_date = end_date - timedelta(days=30)
+        start_date = end_date - timedelta(days=90)
+        
 
     # =================================================================
     # KALKULASI UNTUK PIE CHART (PERBANDINGAN TARGET)
@@ -202,10 +206,41 @@ def laporan_akademik(request):
         # ... (Logika ini tetap sama seperti sebelumnya untuk menentukan status target) ...
         # (Untuk keringkasan, logika detailnya tidak ditampilkan di sini, tapi ada di file Anda)
 
-        # Tambahkan ke hitungan (logika ini juga tidak berubah)
+               # ----------------------------------------------------------------
+        # KLASIFIKASI SANTRI: sesuai / melebihi target
+        # ----------------------------------------------------------------
         if fan_completion_dates:
-            # (logika if is_melebihi_target ... else ... tidak berubah)
-            pass
+            # Ambil fan TERAKHIR yang diselesaikan santri
+            last_fan_id      = max(fan_completion_dates, key=fan_completion_dates.get)
+            tanggal_selesai  = fan_completion_dates[last_fan_id]
+            fan_obj          = Fan.objects.get(id=last_fan_id)
+
+            # Tentukan tanggal MULAI fan itu
+            #  - kalau urutan 1 → tanggal tes pertama santri
+            #  - selain itu   → tanggal selesai fan sebelumnya
+            if fan_obj.urutan == 1:
+                try:
+                    tanggal_mulai = RiwayatTes.objects.filter(
+                        santri=santri
+                    ).earliest('tanggal_tes').tanggal_tes
+                except RiwayatTes.DoesNotExist:
+                    tanggal_mulai = tanggal_selesai  # fallback
+            else:
+                try:
+                    fan_sebelumnya   = Fan.objects.get(urutan=fan_obj.urutan - 1)
+                    tanggal_mulai    = fan_completion_dates.get(fan_sebelumnya.id, tanggal_selesai)
+                except Fan.DoesNotExist:
+                    tanggal_mulai = tanggal_selesai  # fallback
+
+            # Hitung selisih hari
+            selisih_hari = (tanggal_selesai - tanggal_mulai).days or 0
+
+            # Bandingkan dengan target_durasi_hari
+            if selisih_hari > fan_obj.target_durasi_hari:
+                melebihi_target_count += 1
+            else:
+                sesuai_target_count  += 1
+
 
     # =================================================================
     # KALKULASI UNTUK BAR CHART (REKAP TES)
@@ -221,7 +256,20 @@ def laporan_akademik(request):
     
     labels_rekap = ['Total Tes', 'Lulus', 'Gugur', 'Fan Selesai']
     data_rekap = [total_tes, jumlah_lulus, jumlah_gugur, fan_selesai_dalam_periode]
+# … (perhitungan selesai) …
 
+    # ---- DEBUG: cetak hasil hitungan sebelum dikirim ke template ----
+    logger.debug("Target  – Sesuai: %s | Melebihi: %s", sesuai_target_count, melebihi_target_count)
+    logger.debug(
+        "Rekap   – Total: %s | Lulus: %s | Gugur: %s | Fan Selesai: %s",
+        total_tes, jumlah_lulus, jumlah_gugur, fan_selesai_dalam_periode
+    )
+
+     # Siapkan data untuk dikirim ke template
+    labels_target = ['Sesuai Target', 'Melebihi Target']
+    data_target   = [sesuai_target_count, melebihi_target_count]
+    labels_rekap  = ['Total Tes', 'Lulus', 'Gugur', 'Fan Selesai']
+    data_rekap    = [total_tes, jumlah_lulus, jumlah_gugur, fan_selesai_dalam_periode]
     konteks = {
         'page_title': 'Laporan Rekapitulasi Tes',
         'labels_target_json': json.dumps(labels_target),

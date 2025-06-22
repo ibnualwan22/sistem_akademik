@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 # sistem_akademik/settings.py
 import os
+import logging.config
+
 # ...
 
 # Ambil SECRET_KEY dari environment variable, bukan ditulis langsung
@@ -58,7 +60,35 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # biarkan logger default hidup
+    'formatters': {
+        'simple': {
+            'format': '[{levelname}] {name} – {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        # Logger bawaan Django (opsional, agar lebih ringkas)
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        # Logger aplikasi kita (nama modul = 'core')
+        'core': {
+            'handlers': ['console'],
+            'level': 'DEBUG',  # ubah ke INFO di produksi
+            'propagate': False,
+        },
+    },
+}
 ROOT_URLCONF = 'sistem_akademik.urls'
 
 TEMPLATES = [
