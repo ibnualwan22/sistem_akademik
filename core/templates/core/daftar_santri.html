@@ -1,0 +1,95 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Utama{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Dashboard Utama</h1>
+
+    <div class="row mb-5">
+        <div class="col-lg-4 mb-3 card-link-wrapper">
+            <div class="card text-center text-bg-light h-100">
+                <a href="{% url 'core:semua_santri' %}" class="card-body text-decoration-none text-dark d-flex flex-column justify-content-center">
+                    <h5 class="card-title">Santri Aktif</h5>
+                    <p class="card-text fs-1 fw-bold my-auto">{{ total_santri_aktif }}</p>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-3 card-link-wrapper">
+            <div class="card text-center text-bg-light h-100">
+                <a href="{% url 'core:semua_santri' %}" class="card-body text-decoration-none text-dark d-flex flex-column justify-content-center">
+                    <h5 class="card-title">Pengurus/Abdi Dalem</h5>
+                    <p class="card-text fs-1 fw-bold my-auto">{{ total_lulusan }}</p>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-3 card-link-wrapper">
+            <div class="card text-center text-bg-light h-100">
+                <a href="{% url 'core:daftar_sks' %}" class="card-body text-decoration-none text-dark d-flex flex-column justify-content-center">
+                    <h5 class="card-title">Total SKS Kurikulum</h5>
+                    <p class="card-text fs-1 fw-bold my-auto">{{ total_sks }}</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% if mvp_santri %}
+    <div class="card text-center bg-warning-subtle border-warning mb-5 shadow-sm">
+        <div class="card-header">
+            <strong>⭐ MVP Santri Takhossus Pekan Ini ⭐</strong>
+        </div>
+        <div class="card-body">
+            {% if mvp_santri.foto_profil %}
+                <img src="{{ mvp_santri.foto_profil.url }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;" alt="Foto {{ mvp_santri.nama_lengkap }}">
+            {% else %}
+                <img src="{% static 'core/images/default.png' %}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;" alt="Foto default">
+            {% endif %}
+            <h3 class="card-title">{{ mvp_santri.nama_lengkap }}</h3>
+            <p class="card-text">
+                Dengan pencapaian luar biasa telah lulus <strong>{{ mvp_santri.lulus_mingguan }} tes</strong> dalam 7 hari terakhir!
+            </p>
+            <a href="{% url 'core:detail_santri' mvp_santri.pk %}" class="btn btn-warning">Lihat Profil</a>
+        </div>
+    </div>
+    {% endif %}
+    <hr class="my-4">
+
+
+    <div class="row mt-4">
+        <div class="col-md-7">
+            <h4>Leaderboard Asrama Takhossus</h4>
+            <p class="text-muted small">Santri terbaik di setiap Fan berdasarkan jumlah SKS lulus.</p>
+            <div class="list-group">
+                {% for data in juara_per_fan %}
+                    <a href="{% url 'core:leaderboard_fan' data.fan.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ data.fan.nama_fan }}</h6>
+                            <span class="badge bg-primary rounded-pill">{{ data.jumlah_lulus }} SKS</span>
+                        </div>
+                        <p class="mb-1 small text-muted">Dipegang oleh: <strong>{{ data.santri.nama_lengkap }}</strong></p>
+                    </a>
+                {% empty %}
+                    <p class="text-muted p-3">Belum ada data untuk ditampilkan.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <h4>Aktivitas Hari Ini</h4>
+            <div class="list-group">
+                {% for tes in aktivitas_terkini %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ tes.santri.nama_lengkap }}</h6>
+                            <small class="text-muted">{{ tes.tanggal_tes|date:"d M Y" }}</small>
+                        </div>
+                        <p class="mb-1 small">Mengikuti tes <strong>{{ tes.sks.nama_sks }}</strong></p>
+                        <small>Status: {% if tes.status_kelulusan == "Lulus" %}<span class="badge rounded-pill text-bg-success">Lulus</span>{% else %}<span class="badge rounded-pill text-bg-danger">Mengulang</span>{% endif %} (Nilai: <strong>{{ tes.nilai }}</strong>)</small>
+                    </div>
+                {% empty %}
+                    <p class="text-muted p-3">Belum ada aktivitas tes yang tercatat hari ini.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

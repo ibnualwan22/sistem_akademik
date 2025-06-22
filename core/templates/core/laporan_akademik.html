@@ -1,0 +1,110 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Filter Laporan</h5>
+            <form method="GET" action="{% url 'core:laporan_akademik' %}" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label for="start_date" class="form-label">Dari Tanggal:</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-5">
+                    <label for="end_date" class="form-label">Sampai Tanggal:</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Perbandingan Pencapaian Target Santri</h5>
+                </div>
+                <div class="card-body" style="height: 400px;">
+                    <canvas id="targetChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Rekapitulasi Tes</h5>
+                </div>
+                <div class="card-body" style="height: 400px;">
+                    <canvas id="rekapChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Data dari Django Views
+        const labelsTarget = JSON.parse('{{ labels_target_json|safe }}');
+        const dataTarget = JSON.parse('{{ data_target_json|safe }}');
+        const labelsRekap = JSON.parse('{{ labels_rekap_json|safe }}');
+        const dataRekap = JSON.parse('{{ data_rekap_json|safe }}');
+
+        // Menggambar Grafik 1 (Pie Chart)
+        const ctxTarget = document.getElementById('targetChart');
+        new Chart(ctxTarget, {
+            type: 'pie',
+            data: {
+                labels: labelsTarget,
+                datasets: [{
+                    label: 'Jumlah Santri',
+                    data: dataTarget,
+                    backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(220, 53, 69, 0.7)'],
+                    borderColor: ['rgba(40, 167, 69, 1)', 'rgba(220, 53, 69, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Menggambar Grafik 2 (Bar Chart)
+        const ctxRekap = document.getElementById('rekapChart');
+        new Chart(ctxRekap, {
+            type: 'bar',
+            data: {
+                labels: labelsRekap,
+                datasets: [{
+                    label: 'Jumlah',
+                    data: dataRekap,
+                    backgroundColor: [
+                        'rgba(0, 123, 255, 0.6)',  // Biru
+                        'rgba(40, 167, 69, 0.6)',  // Hijau
+                        'rgba(255, 193, 7, 0.6)',  // Kuning
+                        'rgba(23, 162, 184, 0.6)'  // Cyan
+                    ],
+                    borderColor: [
+                        'rgba(0, 123, 255, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(23, 162, 184, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: false } } // Sembunyikan legenda karena sudah jelas dari label sumbu-x
+            }
+        });
+    </script>
+{% endblock %}

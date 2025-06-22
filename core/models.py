@@ -1,0 +1,93 @@
+# Lokasi file: core/models.py
+# VERSI FINAL - DIPERIKSA ULANG 22 JUNI 2025
+
+from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+# ==============================================================================
+# MODEL 1: FAN
+# ==============================================================================
+class Fan(models.Model):
+    nama_fan = models.CharField(max_length=100, unique=True, verbose_name="Nama Fan")
+    deskripsi = models.TextField(blank=True, null=True)
+    urutan = models.IntegerField(default=0, help_text="Isi dengan angka untuk urutan, misal: 1, 2, 3...")
+    target_durasi_hari = models.PositiveIntegerField(default=30, help_text="Target penyelesaian dalam HARI, misal: 1 bulan = 30 hari")
+
+    def __str__(self):
+        return self.nama_fan
+
+# ==============================================================================
+# MODEL 2: SKS
+# ==============================================================================
+class SKS(models.Model):
+    nama_sks = models.CharField(max_length=200, unique=True, verbose_name="Nama SKS/Kitab")
+    fan = models.ForeignKey(Fan, on_delete=models.CASCADE, related_name='sks_list')
+    nilai_minimal = models.PositiveIntegerField(default=90, help_text="Nilai minimal untuk lulus SKS ini")
+
+    class Meta:
+        verbose_name = "SKS"
+        verbose_name_plural = "SKS"
+
+    def __str__(self):
+        return self.nama_sks
+
+# ==============================================================================
+# MODEL 3: SANTRI
+# ==============================================================================
+class Santri(models.Model):
+    STATUS_CHOICES = [
+        ('Aktif', 'Aktif'),
+        ('Lulus', 'Lulus'),
+        ('Non-Aktif', 'Non-Aktif'),
+    ]
+
+    nama_lengkap = models.CharField(max_length=150)
+    id_santri = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="ID Santri")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Aktif')
+    foto_profil = models.ImageField(
+        upload_to='santri_photos/', 
+        blank=True, 
+        null=True,
+        help_text="Upload foto profil santri"
+    )
+    
+    def __str__(self):
+        return self.nama_lengkap
+
+    def get_sks_lulus_ids(self):
+        """
+        Metode ini mengembalikan daftar ID dari semua SKS
+        yang sudah dilulusi oleh santri ini secara dinamis.
+        """
+        sks_lulus_ids = []
+        # 'self.riwayat_tes' adalah 'related_name' dari ForeignKey di model RiwayatTes
+        for tes in self.riwayat_tes.all():
+            if tes.nilai >= tes.sks.nilai_minimal:
+                if tes.sks.id not in sks_lulus_ids:
+                    sks_lulus_ids.append(tes.sks.id)
+        return sks_lulus_ids
+
+# ==============================================================================
+# MODEL 4: RIWAYAT TES
+# ==============================================================================
+class RiwayatTes(models.Model):
+    santri = models.ForeignKey(Santri, on_delete=models.CASCADE, related_name='riwayat_tes')
+    sks = models.ForeignKey(SKS, on_delete=models.CASCADE, related_name='riwayat_tes')
+    tanggal_tes = models.DateField()
+    nilai = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+
+    @property
+    def status_kelulusan(self):
+        if self.nilai >= self.sks.nilai_minimal:
+            return "Lulus"
+        else:
+            return "Mengulang"
+
+    @property
+    def fan(self):
+        return self.sks.fan.nama_fan
+
+    def __str__(self):
+        return f"{self.santri.nama_lengkap} - {self.sks.nama_sks} ({self.status_kelulusan})"

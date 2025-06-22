@@ -1,0 +1,21 @@
+# Lokasi file: core/urls.py
+# Versi Final dan Lengkap
+
+from django.urls import path
+# Kita import seluruh modul views agar lebih aman dan jelas
+from . import views
+
+app_name = 'core'
+
+urlpatterns = [
+    # Setiap path memanggil fungsi yang benar dari 'views'
+    path('', views.daftar_santri, name='daftar_santri'),
+    path('semua/', views.semua_santri_view, name='semua_santri'),
+    path('sks/', views.daftar_sks_view, name='daftar_sks'),
+    path('kurikulum/', views.kurikulum_view, name='kurikulum'),
+    path('laporan/', views.laporan_akademik, name='laporan_akademik'),
+    path('leaderboard/fan/<int:fan_pk>/', views.leaderboard_fan_view, name='leaderboard_fan'),
+    path('<int:pk>/', views.detail_santri, name='detail_santri'),
+    path('santri/<int:santri_pk>/fan/<int:fan_pk>/', views.detail_fan_santri, name='detail_fan_santri'),
+    path('laporan/detail/', views.laporan_rekap_detail, name='laporan_rekap_detail'),
+]

@@ -1,0 +1,66 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>{% block title %}Sistem Akademik{% endblock %}</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'core/css/custom.css' %}">
+     <link rel="stylesheet" href="{% static 'core/css/custom.css' %}">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg bg-dark" data-bs-theme="dark">
+      <div class="container">
+        <a class="navbar-brand" href="{% url 'core:daftar_santri' %}">
+            <img src="{% static 'core/images/Takhossus.png' %}" alt="Logo Asrama Takhossus" height="30">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'daftar_santri' %}active{% endif %}" href="{% url 'core:daftar_santri' %}">
+            <i class="bi bi-house-door-fill me-2"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'semua_santri' %}active{% endif %}" href="{% url 'core:semua_santri' %}">
+            <i class="bi bi-people-fill me-2"></i>Daftar Santri
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'daftar_sks' %}active{% endif %}" href="{% url 'core:daftar_sks' %}">
+            <i class="bi bi-journal-text me-2"></i>Daftar SKS
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'kurikulum' %}active{% endif %}" href="{% url 'core:kurikulum' %}">
+            <i class="bi bi-book-half me-2"></i>Kurikulum
+        </a>
+    </li>
+    <li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'laporan_akademik' %}active{% endif %}" href="{% url 'core:laporan_akademik' %}">
+        <i class="bi bi-bar-chart-line-fill me-2"></i>Laporan
+        </a>
+    </li>
+</ul>
+          <a href="/admin/login/" class="btn btn-outline-light">Login Admin</a>
+        </div>
+      </div>
+    </nav>
+    
+    <div class="container mt-4 mb-5 page-content">
+      {% block content %}
+      {% endblock %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>

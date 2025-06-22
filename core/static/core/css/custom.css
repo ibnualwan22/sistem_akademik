@@ -1,0 +1,47 @@
+/* Lokasi file: core/static/core/css/custom.css */
+
+/* Mengubah warna latar belakang Navbar default Bootstrap */
+.bg-dark {
+    background-color: #2d3748 !important; /* Warna abu-abu kebiruan yang elegan */
+}
+
+/* Mengubah font dan warna untuk semua judul utama h1 */
+h1 {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #1a202c;
+    font-weight: 700;
+}
+
+/* Menambahkan sedikit efek hover pada item di list-group */
+.list-group-item-action:hover {
+    background-color: #f7fafc;
+    transform: translateY(-2px); /* <-- Sedikit animasi sederhana! */
+    transition: all 0.2s ease-in-out; /* <-- Ini yang membuat animasinya halus */
+}
+/* Animasi Fade-in untuk konten utama halaman */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Terapkan animasi ke elemen dengan kelas .page-content */
+.page-content {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Efek hover pada kartu statistik di dashboard */
+.card-link-wrapper .card:hover {
+    transform: translateY(-5px); /* Mengangkat kartu sedikit ke atas */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Menambah bayangan agar terlihat mengambang */
+}
+
+.card-link-wrapper .card {
+    /* Membuat transisi animasinya halus */
+    transition: all 0.3s ease-in-out;
+}

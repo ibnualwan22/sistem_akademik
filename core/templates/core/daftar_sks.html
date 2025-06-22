@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Nama SKS / Kitab</th>
+                <th>Fan</th>
+                <th>Deskripsi</th>
+                <th>Nilai Minimal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sks in semua_sks %}
+            <tr>
+                <td>{{ sks.nama_sks }}</td>
+                <td>{{ sks.fan.nama_fan }}</td>
+                <td>{{ sks.fan.deskripsi|default:"-" }}</td>
+                <td>{{ sks.nilai_minimal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

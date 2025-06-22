@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-3">{{ page_title }}</h1>
+    <p class="lead">Top 5 santri dengan SKS lulus terbanyak dan tercepat di Fan ini.</p>
+    <hr>
+
+    <ol class="list-group list-group-numbered">
+        {% for santri in peringkat_santri %}
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{ santri.nama_lengkap }}</div>
+                    Telah menyelesaikan {{ santri.jumlah_lulus_di_fan }} SKS di Fan ini.
+                </div>
+                <span class="badge bg-primary rounded-pill fs-6">{{ santri.jumlah_lulus_di_fan }}</span>
+            </li>
+        {% empty %}
+            <p class="text-muted">Belum ada data peringkat untuk Fan ini.</p>
+        {% endfor %}
+    </ol>
+
+    <a href="{% url 'core:daftar_santri' %}" class="btn btn-secondary mt-4">Kembali ke Dashboard</a>
+{% endblock %}

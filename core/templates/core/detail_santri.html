@@ -1,0 +1,121 @@
+{% extends 'core/base.html' %}
+{% load static %} {% block title %}{{ page_title }}{% endblock %}
+
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Profil Santri</h1>
+        <a href="{% url 'core:daftar_santri' %}" class="btn btn-secondary">Kembali ke Dashboard</a>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-3 text-center mb-3 mb-md-0">
+                    {% if santri.foto_profil %}
+                        <img src="{{ santri.foto_profil.url }}" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #eee;" alt="Foto {{ santri.nama_lengkap }}">
+                    {% else %}
+                        <img src="{% static 'core/images/default.png' %}" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #eee;" alt="Foto default">
+                    {% endif %}
+                </div>
+
+                <div class="col-md-9">
+                    <h2 class="mb-3">{{ santri.nama_lengkap }}</h2>
+                    <p><strong>ID Santri:</strong> {{ santri.id_santri|default:"-" }}</p>
+                    <p><strong>Status:</strong> <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill">{{ santri.status }}</span></p>
+                    {% if fan_saat_ini %}
+                        <p class="mb-0"><strong>Fan Saat Ini:</strong> 
+                            <span class="badge {% if fan_saat_ini.nama_fan %}bg-primary{% else %}bg-success{% endif %} fs-6 rounded-pill">
+                                {% if fan_saat_ini.nama_fan %}
+                                    {{ fan_saat_ini.nama_fan }}
+                                {% else %}
+                                    {{ fan_saat_ini }}
+                                {% endif %}
+                            </span>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Progress Akademik per Fan</h4>
+        </div>
+        <div class="card-body">
+            {% for data in progress_per_fan %}
+                {% if data.total_sks > 0 %}
+                <div class="mb-4 {% if not forloop.last %}pb-3 border-bottom{% endif %}">
+                    <h5>
+                        <a href="{% url 'core:detail_fan_santri' santri.pk data.fan.pk %}" class="text-decoration-none">
+                            {{ data.fan.nama_fan }}
+                        </a>
+                    </h5>
+                    <p class="mb-1 text-muted">
+                        Terselesaikan: {{ data.jumlah_lulus }} dari {{ data.total_sks }} SKS
+                    </p>
+                    {% if data.durasi_studi %}
+                    <p class="text-muted small mt-1">
+                        Durasi Studi: <strong>{{ data.durasi_studi }}</strong>
+                        {% if data.status_target %}
+                            {% if data.status_target == "Sesuai Target" %}
+                                <span class="badge bg-success-subtle text-success-emphasis rounded-pill ms-2">{{ data.status_target }}</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill ms-2">{{ data.status_target }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    <div class="progress" role="progressbar" style="height: 20px;">
+                        <div class="progress-bar bg-success" style="width: {{ data.persentase }}%">{{ data.persentase }}%</div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <div class="card mb-5">
+        <div class="card-header">
+            <h4>Riwayat Tes Lengkap</h4>
+        </div>
+        {% if semua_tes %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>SKS yang Diuji</th>
+                            <th>Nilai</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tes in semua_tes %}
+                        <tr>
+                            <td>{{ tes.tanggal_tes|date:"d M Y" }}</td>
+                            <td>{{ tes.sks.nama_sks }}</td>
+                            <td>{{ tes.nilai }}</td>
+                            <td>
+                                {% if tes.status_kelulusan == "Lulus" %}
+                                    <span class="badge bg-success">Lulus</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Mengulang</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card-body">
+                <p class="text-muted">Santri ini belum memiliki riwayat tes.</p>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

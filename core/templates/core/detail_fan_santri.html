@@ -1,0 +1,34 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Detail SKS {{ fan.nama_fan }} - {{ santri.nama_lengkap }}{% endblock %}
+
+{% block content %}
+    <h3 class="mb-3">Detail SKS Fan: {{ fan.nama_fan }}</h3>
+    <p>Untuk Santri: <strong>{{ santri.nama_lengkap }}</strong></p>
+    <hr>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <h4>SKS Selesai:</h4>
+            <ul class="list-group">
+                {% for sks in sks_lulus %}
+                    <li class="list-group-item list-group-item-success">✔️ {{ sks.nama_sks }}</li>
+                {% empty %}
+                    <li class="list-group-item"><em>(Belum ada)</em></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h4>SKS Belum Selesai:</h4>
+            <ul class="list-group">
+                {% for sks in sks_belum_lulus %}
+                    <li class="list-group-item list-group-item-warning">❌ {{ sks.nama_sks }}</li>
+                {% empty %}
+                    <li class="list-group-item"><em>(Semua sudah selesai)</em></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <a href="{% url 'core:detail_santri' santri.pk %}" class="btn btn-secondary mt-4">Kembali ke Profil Santri</a>
+{% endblock %}
