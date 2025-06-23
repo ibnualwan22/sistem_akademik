@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Untuk static files di produksi
+    'whitenoise',
     'django.contrib.staticfiles',
 
     # Aplikasi kita sendiri
