@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{# Mengganti judul tab di browser #}
+{% block title %}{% trans 'Administrasi Akademik' %}{% endblock %}
+
+{# Mengganti header utama di halaman #}
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        Administrasi Akademik Takhossus
+    </a>
+</h1>
+{% endblock %}
+
+{# Baris ini untuk menjaga agar link "Lihat Situs" dll. tetap ada #}
+{% block nav-global %}{% endblock %}

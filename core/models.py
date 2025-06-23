@@ -15,6 +15,9 @@ class Fan(models.Model):
 
     def __str__(self):
         return self.nama_fan
+    class Meta:
+        verbose_name = "Fan"
+        verbose_name_plural = "Fan"
 
 # ==============================================================================
 # MODEL 2: SKS
@@ -34,13 +37,15 @@ class SKS(models.Model):
 # ==============================================================================
 # MODEL 3: SANTRI
 # ==============================================================================
+
 class Santri(models.Model):
     STATUS_CHOICES = [
         ('Aktif', 'Aktif'),
-        ('Lulus', 'Lulus'),
+        ('Pengurus', 'Pengurus/Abdi Dalem'),
         ('Non-Aktif', 'Non-Aktif'),
     ]
 
+    # Field-field Anda
     nama_lengkap = models.CharField(max_length=150)
     id_santri = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="ID Santri")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Aktif')
@@ -51,21 +56,44 @@ class Santri(models.Model):
         help_text="Upload foto profil santri"
     )
     
+    # class Meta seharusnya berada di sini, sejajar dengan method
+    class Meta:
+        verbose_name = "Santri"
+        verbose_name_plural = "Santri"
+
+    # Method-method Anda
     def __str__(self):
         return self.nama_lengkap
 
     def get_sks_lulus_ids(self):
-        """
-        Metode ini mengembalikan daftar ID dari semua SKS
-        yang sudah dilulusi oleh santri ini secara dinamis.
-        """
         sks_lulus_ids = []
-        # 'self.riwayat_tes' adalah 'related_name' dari ForeignKey di model RiwayatTes
-        for tes in self.riwayat_tes.all():
-            if tes.nilai >= tes.sks.nilai_minimal:
-                if tes.sks.id not in sks_lulus_ids:
-                    sks_lulus_ids.append(tes.sks.id)
+        if hasattr(self, 'riwayat_tes'):
+            for tes in self.riwayat_tes.all():
+                if tes.nilai >= tes.sks.nilai_minimal:
+                    if tes.sks.id not in sks_lulus_ids:
+                        sks_lulus_ids.append(tes.sks.id)
         return sks_lulus_ids
+
+    def get_completed_fans_with_dates(self):
+        sks_lulus_ids = self.get_sks_lulus_ids()
+        if not sks_lulus_ids:
+            return {}
+        
+        # Semua logika ini seharusnya berada di dalam method ini
+        fan_completion_dates = {}
+        relevant_fans = Fan.objects.filter(sks_list__id__in=sks_lulus_ids).distinct()
+
+        for fan in relevant_fans:
+            sks_in_fan = fan.sks_list.all()
+            if all(sks.id in sks_lulus_ids for sks in sks_in_fan):
+                try:
+                    tgl_selesai = self.riwayat_tes.filter(sks__fan=fan).latest('tanggal_tes').tanggal_tes
+                    fan_completion_dates[fan] = tgl_selesai
+                except RiwayatTes.DoesNotExist:
+                    continue
+        
+        return fan_completion_dates
+
 
 # ==============================================================================
 # MODEL 4: RIWAYAT TES
@@ -91,3 +119,7 @@ class RiwayatTes(models.Model):
 
     def __str__(self):
         return f"{self.santri.nama_lengkap} - {self.sks.nama_sks} ({self.status_kelulusan})"
+    
+    class Meta: # <-- TAMBAHKAN BLOK INI
+        verbose_name = "Riwayat Tes"
+        verbose_name_plural = "Riwayat Tes"

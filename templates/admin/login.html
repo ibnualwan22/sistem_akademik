@@ -5,6 +5,37 @@
     {{ block.super }}
     {# Muat file CSS custom kita #}
     <link rel="stylesheet" href="{% static 'core/css/admin_login.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+
+      <style>
+        /* Menambahkan sedikit style agar form Django menyatu dengan template */
+        #login-form input[type="text"],
+        #login-form input[type="password"] {
+            display: block;
+            width: 100%;
+            padding: .375rem .75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border-radius: .25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        #login-form input[type="text"]:focus,
+        #login-form input[type="password"]:focus {
+            color: #212529;
+            background-color: #fff;
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+        }
+    </style>
 {% endblock %}
 
 {% block bodyclass %}{{ block.super }} login{% endblock %}
@@ -14,7 +45,67 @@
 {% block nav-sidebar %}{% endblock %}
 
 {% block content %}
-<section class="background-radial-gradient overflow-hidden">
+<section class="h-100">
+    <div class="container h-100">
+        <div class="row justify-content-sm-center h-100 align-items-center">
+            <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
+                <div class="text-center my-5">
+                    {# Ganti path ini dengan path logo Anda di folder static #}
+                    <img src="{% static 'core/images/Takhossus.png' %}" alt="logo" width="100">
+                </div>
+                <div class="card shadow-lg">
+                    <div class="card-body p-5">
+                        <h1 class="fs-4 card-title fw-bold mb-4 text-center">Login Admin</h1>
+
+                        {# --- FORM LOGIN DARI DJANGO --- #}
+                        <form action="{{ app_path }}" method="post" id="login-form" autocomplete="off">
+                            {% csrf_token %}
+
+                            {# Menampilkan error jika login gagal #}
+                            {% if form.errors and not form.non_field_errors %}
+                                <p class="alert alert-danger p-2 text-center">
+                                {% blocktrans trimmed %}
+                                    Nama pengguna atau sandi salah. Silakan coba lagi.
+                                {% endblocktrans %}
+                                </p>
+                            {% endif %}
+                            {% if form.non_field_errors %}
+                                {% for error in form.non_field_errors %}
+                                <p class="alert alert-danger p-2 text-center">
+                                    {{ error }}
+                                </p>
+                                {% endfor %}
+                            {% endif %}
+
+                            <!-- Username input -->
+                            <div class="mb-3">
+                                <label class="mb-2 text-muted" for="{{ form.username.id_for_label }}">Nama Pengguna</label>
+                                {{ form.username }}
+                            </div>
+
+                            <!-- Password input -->
+                            <div class="mb-3">
+                                <label class="text-muted" for="{{ form.password.id_for_label }}">Sandi</label>
+                                {{ form.password }}
+                                <input type="hidden" name="next" value="{{ next }}">
+                            </div>
+
+                            <div class="d-flex align-items-center mt-4">
+                                <button type="submit" class="btn btn-primary ms-auto w-100">
+                                    Masuk
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="text-center mt-5 text-muted">
+                    Copyright &copy; 2025 &mdash; Sistem Akademik Takhossus
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- <section class="background-radial-gradient overflow-hidden">
   <div class="container px-4 py-5 px-md-5 text-center text-lg-start my-5">
     <div class="row gx-lg-5 align-items-center mb-5">
       <div class="col-lg-6 mb-5 mb-lg-0" style="z-index: 10">
@@ -80,5 +171,5 @@
       </div>
     </div>
   </div>
-</section>
+</section> -->
 {% endblock %}

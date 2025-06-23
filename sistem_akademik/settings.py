@@ -2,7 +2,6 @@
 
 from pathlib import Path
 import os
-import dj_database_url # Diperlukan untuk membaca DATABASE_URL dari Render
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +38,7 @@ if RENDER_EXTERNAL_HOSTNAME:
 # ==============================================================================
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -160,4 +160,104 @@ LOGGING = {
         'django': {'handlers': ['console'], 'level': 'INFO',},
         'core': {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False,},
     },
+}
+
+# ==============================================================================
+# KONFIGURASI DJANGO-JAZZMIN
+# Letakkan ini di bagian paling bawah file settings.py Anda
+# ==============================================================================
+
+JAZZMIN_SETTINGS = {
+    # Judul yang muncul di tab browser dan di header halaman login
+    "site_title": "Administrasi Takhossus",
+
+    # Teks header di halaman admin
+    "site_header": "Sistem Akademik",
+
+    # Teks yang muncul di sebelah logo (jika ada)
+    "site_brand": "Takhossus",
+
+    # Path ke logo Anda di folder static. Ganti jika perlu.
+    # Harus diawali dengan nama aplikasi Anda ('core/')
+    "site_logo": "core/images/Takhossus.png",
+
+    # Logo untuk halaman login
+    "login_logo": "core/images/Takhossus.png",
+
+    # Teks sambutan di halaman utama admin
+    "welcome_sign": "Selamat datang di Administrasi Sistem Akademik Takhossus",
+
+    # Copyright di footer
+    "copyright": "Sistem Akademik Takhossus",
+
+    # Mengatur urutan dan pengelompokan model di sidebar
+    "order_with_respect_to": [
+        # Grup pertama: Manajemen Akademik
+        "core", "core.Santri", "core.RiwayatTes", "core.SKS", "core.Fan",
+        
+        # Grup kedua: Otentikasi
+        "auth.User", "auth.Group",
+    ],
+
+    # Menambahkan ikon untuk setiap model (menggunakan Font Awesome)
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        
+        "core.Santri": "fas fa-user-graduate",
+        "core.RiwayatTes": "fas fa-check-double",
+        "core.SKS": "fas fa-book-open",
+        "core.Fan": "fas fa-layer-group",
+    },
+
+    # Menyembunyikan model tertentu (jika perlu)
+    "hide_models": [],
+
+    # Menyembunyikan aplikasi tertentu
+    "hide_apps": [],
+
+    # Menambahkan link custom di menu atas
+    "topmenu_links": [
+        # Link kembali ke dashboard utama aplikasi Anda
+        {"name": "Lihat Situs",  "url": "/", "new_window": True},
+
+        # Link ke halaman admin (sudah otomatis ada)
+        {"name": "Admin", "url": "/admin", "permissions": ["auth.view_user"]},
+
+        # Model App
+        {"app": "core"},
+    ],
+
+    # Opsi UI
+    "show_ui_builder": True, # Sembunyikan UI builder agar lebih bersih
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": False,
+    "accent": "accent-lightblue",
+    "navbar": "navbar-dark",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": False,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": True,
+    "sidebar_nav_flat_style": False,
+    "theme": "darkly",
+    "dark_mode_theme": "darkly",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary"
+    },
+    "custom_css": "core/static/core/css/jazzmin_custom.css"
 }

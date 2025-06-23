@@ -1,0 +1,87 @@
+/* jazzmin_custom.css - VERSI FINAL LENGKAP */
+
+/* ======================================================= */
+/* 1. GAYA UNTUK NAMA MODEL DI DASHBOARD UTAMA             */
+/* ======================================================= */
+.app-list .model-link {
+    color: #ffffff !important;
+    font-weight: 500;
+}
+
+.app-list .model-link:hover {
+    color: #d4d4d4 !important;
+}
+
+
+/* ======================================================= */
+/* 2. GAYA UNTUK TOMBOL TAMBAH & UBAH DI DASHBOARD         */
+/* ======================================================= */
+.app-list .addlink,
+.app-list .changelink {
+    color: #b0bec5 !important;
+    border: 1px solid #4a4a4a;
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    margin-left: 6px;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+}
+
+.app-list .addlink:hover,
+.app-list .changelink:hover {
+    background-color: #0d6efd;
+    color: #ffffff !important;
+    border-color: #0d6efd;
+    text-decoration: none;
+}
+
+
+/* ======================================================= */
+/* 3. GAYA UNTUK LINK DI DALAM TABEL DAFTAR (CHANGELIST)   */
+/* ======================================================= */
+#changelist .results tbody th a,
+#changelist .results tbody td a {
+    color: #e0e0e0 !important;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#changelist .results tbody th a:hover,
+#changelist .results tbody td a:hover {
+    color: #ffffff !important;
+    text-decoration: underline;
+}
+
+/* ======================================================= */
+/* 4. MEMPERJELAS BARIS MODEL DI DASHBOARD                 */
+/* ======================================================= */
+.app-list .table tr {
+    border-bottom: 1px solid #4f5b69;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.app-list .table tr:last-child {
+    border-bottom: none;
+}
+
+.app-list .table tr:hover {
+    background-color: #3a4556;
+}
+
+/* ======================================================= */
+/* 5. FIX WARNA TEKS SAAT DIPILIH DI WIDGET HAK AKSES      */
+/* (INI PERBAIKAN UTAMA UNTUK MASALAH ANDA SAAT INI)       */
+/* ======================================================= */
+.selector-available li.selected,
+.selector-chosen li.selected {
+    background: #0d6efd !important; /* Warna biru primer Bootstrap */
+    color: #ffffff !important;      /* PAKSA warna teks menjadi PUTIH */
+    border-radius: 4px;
+}
+
+.selector-available li.selected a,
+.selector-chosen li.selected a {
+    color: #ffffff !important;      /* Pastikan link di dalamnya juga putih */
+}
+

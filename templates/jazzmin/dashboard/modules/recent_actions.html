@@ -1,0 +1,51 @@
+{% load i18n jazzmin %}
+
+{# --- LOGIKA PENGAMBILAN LOG --- #}
+{# Cek apakah pengguna yang login adalah superuser #}
+{% if user.is_superuser %}
+    {# Jika superuser, ambil log dari SEMUA pengguna (termasuk dirinya sendiri) #}
+    {% get_admin_log as log_entries for_user=None %}
+{% else %}
+    {# Jika bukan superuser, ambil log hanya untuk pengguna saat ini #}
+    {% get_admin_log as log_entries %}
+{% endif %}
+
+
+<div class="card card-primary card-outline">
+    <div class="card-header">
+        {# Judul widget sekarang selalu sama #}
+        <h3 class="card-title">{% trans 'Tindakan Terbaru' %}</h3>
+    </div>
+    <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+            {# Loop ini sekarang sederhana, tanpa ada filter 'if' di dalamnya #}
+            {% for log in log_entries %}
+            <li class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <div>
+                        <i class="fas fa-edit text-muted mr-2"></i>
+                        {{ log.get_change_message|capfirst }}
+                    </div>
+                </div>
+                <div class="d-flex w-100 justify-content-between mt-1">
+                    <div class="text-muted small">
+                        {% if log.content_type %}
+                            <a href="{% url 'admin:index' %}{{ log.content_type.app_label }}/{{ log.content_type.model }}/{{ log.object_id }}/change/">
+                                {{ log.object_repr }}
+                            </a>
+                        {% else %}
+                            {{ log.object_repr }}
+                        {% endif %}
+                    </div>
+                    <div class="text-muted small">
+                        {# Selalu tampilkan nama pengguna yang melakukan aksi #}
+                        <strong>Oleh: {{ log.user.username }}</strong>
+                    </div>
+                </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item">{% trans 'Tidak ada tindakan terbaru.' %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
