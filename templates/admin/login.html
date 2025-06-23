@@ -1,0 +1,84 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {# Muat file CSS custom kita #}
+    <link rel="stylesheet" href="{% static 'core/css/admin_login.css' %}">
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block usertools %}{% endblock %}
+{% block nav-global %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+
+{% block content %}
+<section class="background-radial-gradient overflow-hidden">
+  <div class="container px-4 py-5 px-md-5 text-center text-lg-start my-5">
+    <div class="row gx-lg-5 align-items-center mb-5">
+      <div class="col-lg-6 mb-5 mb-lg-0" style="z-index: 10">
+        {# --- Ganti Teks Sambutan --- #}
+        <h1 class="my-5 display-5 fw-bold ls-tight" style="color: hsl(218, 81%, 95%)">
+          Sistem Akademik <br />
+          <span style="color: hsl(218, 81%, 75%)">Takhossus</span>
+        </h1>
+        <p class="mb-4 opacity-70" style="color: hsl(218, 81%, 85%)">
+          Silakan masuk untuk mengelola data akademik. Halaman ini didesain untuk
+          memberikan pengalaman administrasi yang aman dan efisien.
+        </p>
+      </div>
+
+      <div class="col-lg-6 mb-5 mb-lg-0 position-relative">
+        <div id="radius-shape-1" class="position-absolute rounded-circle shadow-5-strong"></div>
+        <div id="radius-shape-2" class="position-absolute shadow-5-strong"></div>
+
+        <div class="card bg-glass">
+          <div class="card-body px-4 py-5 px-md-5">
+
+            {# --- INI ADALAH FORM DARI DJANGO --- #}
+            <form action="{{ app_path }}" method="post" id="login-form">
+                {% csrf_token %}
+
+                <h4 class="mb-4 text-center">Administrasi Django</h4>
+
+                {# Menampilkan error jika login gagal #}
+                {% if form.errors and not form.non_field_errors %}
+                    <p class="errornote text-danger text-center mb-3">
+                    {% blocktrans trimmed %}
+                    Please correct the error below.
+                    {% endblocktrans %}
+                    </p>
+                {% endif %}
+
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                    <p class="errornote text-danger text-center mb-3">
+                        {{ error }}
+                    </p>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="form-outline mb-4">
+                    <label class="form-label" for="{{ form.username.id_for_label }}">Nama pengguna:</label>
+                    {{ form.username }}
+                </div>
+
+                <div class="form-outline mb-4">
+                    <label class="form-label" for="{{ form.password.id_for_label }}">Sandi:</label>
+                    {{ form.password }}
+                    <input type="hidden" name="next" value="{{ next }}">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block mb-4 w-100">
+                    Masuk
+                </button>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

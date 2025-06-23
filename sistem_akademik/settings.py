@@ -17,11 +17,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Ini WAJIB diatur di Render untuk keamanan.
 # Ambil Secret Key dari environment variable, beri nilai default untuk lokal.
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-ini-hanya-untuk-lokal-dan-tidak-apa-apa')
-
+DB_NAME = os.environ.get('DB_NAME', 'akademik')
 # DEBUG=True jika ada env var DEBUG=True, jika tidak maka otomatis False.
 # Di Render, JANGAN set variabel DEBUG agar otomatis False (aman).
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
-
+# DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = True # <-- AKTIFKAN SEMENTARA UNTUK LOKAL
 # Konfigurasi ALLOWED_HOSTS untuk Render dan Lokal
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -67,7 +67,7 @@ ROOT_URLCONF = 'sistem_akademik.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -87,14 +87,27 @@ WSGI_APPLICATION = 'sistem_akademik.wsgi.application'
 # DATABASE
 # Menggunakan dj_database_url untuk membaca env var DATABASE_URL dari Render
 # ==============================================================================
-
 DATABASES = {
-    'default': dj_database_url.config(
-        # Jika DATABASE_URL tidak ada, gunakan SQLite sebagai fallback (untuk lokal)
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': DB_NAME,
+        'USER': 'alan',
+        'PASSWORD': 'alan',
+        'HOST': '165.22.106.176',  # or IP address of the DB server
+        'PORT': '3306',
+        # 'OPTIONS': {
+        #     'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+        # }
+    }
 }
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         # Jika DATABASE_URL tidak ada, gunakan SQLite sebagai fallback (untuk lokal)
+#         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+#         conn_max_age=600
+#     )
+# }
 
 
 # ==============================================================================
