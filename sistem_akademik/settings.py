@@ -10,27 +10,33 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import os
+# =======================
+# SECRET / DEBUG dari ENV
+# =======================
 from pathlib import Path
+import os, logging.config, json
+from datetime import timedelta, date
 import logging.config
 
-# =======================
-# Basic secret / debug
-# =======================
-SECRET_KEY = os.environ.get('SECRET_KEY')
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# DEBUG: True di lokal, False di Render (atau sesuai ENV)
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'REPLACE_ME_IN_LOCAL')
+DEBUG      = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 # =======================
-# Allowed hosts
+# ALLOWED_HOSTS
 # =======================
-ALLOWED_HOSTS = []
+# settings.py  (bagian atas)
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
-# 1) Host bawaan Render
-external_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+external_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if external_host:
     ALLOWED_HOSTS.append(external_host)
+
+extra_hosts = os.environ.get('ALLOWED_HOSTS')  # env var berisi daftar host
+if extra_hosts:
+    ALLOWED_HOSTS += [h.strip() for h in extra_hosts.split(',') if h.strip()]
+
 
 # 2) Host tambahan dari ENV custom (mis. ALLOWED_HOSTS="dom1.com,dom2.com")
 ALLOWED_HOSTS_STR = os.environ.get("ALLOWED_HOSTS")
