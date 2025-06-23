@@ -4,6 +4,22 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
+<script>
+  /* ↓ letakkan SETELAH blok {{ context }} tapi SEBELUM membuat grafik */
+  const DETAIL_URL = "{% url 'core:laporan_rekap_detail' %}";
+  const START_DATE = "{{ start_date }}";
+  const END_DATE   = "{{ end_date }}";
+
+  function redirectToDetail(category) {
+      const params = new URLSearchParams({
+          category:   category,
+          start_date: START_DATE,
+          end_date:   END_DATE
+      });
+      window.location.href = `${DETAIL_URL}?${params.toString()}`;
+  }
+</script>
+
     <h1 class="mb-4">{{ page_title }}</h1>
 
     <div class="card shadow-sm mb-4">
@@ -59,52 +75,74 @@
         const dataRekap = JSON.parse('{{ data_rekap_json|safe }}');
 
         // Menggambar Grafik 1 (Pie Chart)
-        const ctxTarget = document.getElementById('targetChart');
-        new Chart(ctxTarget, {
-            type: 'pie',
-            data: {
-                labels: labelsTarget,
-                datasets: [{
-                    label: 'Jumlah Santri',
-                    data: dataTarget,
-                    backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(220, 53, 69, 0.7)'],
-                    borderColor: ['rgba(40, 167, 69, 1)', 'rgba(220, 53, 69, 1)'],
-                    borderWidth: 1
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        // --- PIE CHART (target santri) ---
+const ctxTarget   = document.getElementById('targetChart');
+const targetChart = new Chart(ctxTarget, {
+  type: 'pie',
+  data: {
+    labels: labelsTarget,
+    datasets: [{
+      label: 'Jumlah Santri',
+      data:  dataTarget,
+      backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(220, 53, 69, 0.7)'],
+      borderColor:     ['rgba(40, 167, 69, 1)',  'rgba(220, 53, 69, 1)'],
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    // ⬇️  handler klik
+    onClick: (evt, elements) => {
+      if (elements.length) {
+        const idx      = elements[0].index;        // Chart.js v3
+        const category = labelsTarget[idx];        // "Sesuai Target" / "Melebihi Target"
+        redirectToDetail(category);
+      }
+    }
+  }
+});
+
 
         // Menggambar Grafik 2 (Bar Chart)
-        const ctxRekap = document.getElementById('rekapChart');
-        new Chart(ctxRekap, {
-            type: 'bar',
-            data: {
-                labels: labelsRekap,
-                datasets: [{
-                    label: 'Jumlah',
-                    data: dataRekap,
-                    backgroundColor: [
-                        'rgba(0, 123, 255, 0.6)',  // Biru
-                        'rgba(40, 167, 69, 0.6)',  // Hijau
-                        'rgba(255, 193, 7, 0.6)',  // Kuning
-                        'rgba(23, 162, 184, 0.6)'  // Cyan
-                    ],
-                    borderColor: [
-                        'rgba(0, 123, 255, 1)',
-                        'rgba(40, 167, 69, 1)',
-                        'rgba(255, 193, 7, 1)',
-                        'rgba(23, 162, 184, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } },
-                plugins: { legend: { display: false } } // Sembunyikan legenda karena sudah jelas dari label sumbu-x
-            }
-        });
+        // --- BAR CHART (rekap tes) ---
+const ctxRekap   = document.getElementById('rekapChart');
+const rekapChart = new Chart(ctxRekap, {
+  type: 'bar',
+  data: {
+    labels: labelsRekap,
+    datasets: [{
+      label: 'Jumlah',
+      data:  dataRekap,
+      backgroundColor: [
+        'rgba(0, 123, 255, 0.6)',
+        'rgba(40, 167, 69, 0.6)',
+        'rgba(255, 193, 7, 0.6)',
+        'rgba(23, 162, 184, 0.6)'
+      ],
+      borderColor: [
+        'rgba(0, 123, 255, 1)',
+        'rgba(40, 167, 69, 1)',
+        'rgba(255, 193, 7, 1)',
+        'rgba(23, 162, 184, 1)'
+      ],
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: { y: { beginAtZero: true } },
+    plugins: { legend: { display: false } },
+    // ⬇️  handler klik
+    onClick: (evt, elements) => {
+      if (elements.length) {
+        const idx      = elements[0].index;
+        const category = labelsRekap[idx];         // "Pendaftaran Tes" / "Lulus" / …
+        redirectToDetail(category);
+      }
+    }
+  }
+});
     </script>
 {% endblock %}

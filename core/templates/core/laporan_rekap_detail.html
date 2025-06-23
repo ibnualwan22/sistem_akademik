@@ -1,0 +1,80 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="h3">Detail Kategori: {{ category }}</h2>
+            <p class="text-muted">Periode: {{ start_date }} &mdash; {{ end_date }}</p>
+        </div>
+        
+        {# Tombol Kembali ke Laporan Utama dengan membawa filter tanggal #}
+        <a href="{% url 'core:laporan_akademik' %}?start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> &nbsp;Kembali ke Laporan
+        </a>
+    </div>
+
+    {# Cek apakah kita punya data detail untuk kategori Sesuai/Melebihi Target #}
+    {% if rekap_detail_list %}
+        <h4 class="h5 mb-3">Daftar Santri ({{ rekap_detail_list|length }})</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Nama Santri</th>
+                        <th scope="col">Fan yang Melebihi Target</th>
+                        <th scope="col">Tanggal Mulai</th>
+                        <th scope="col">Tanggal Selesai</th>
+                        <th scope="col" class="text-center">Durasi Tempuh</th>
+                        <th scope="col" class="text-center">Target</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rekap_detail_list %}
+                    <tr>
+                        <th scope="row">{{ forloop.counter }}</th>
+                        <td>
+                            <a href="{% url 'core:detail_santri' item.santri.pk %}">
+                                {{ item.santri.nama_lengkap }}
+                            </a>
+                        </td>
+                        <td>{{ item.fan.nama_fan }}</td>
+                        <td>{{ item.tanggal_mulai|date:"d M Y" }}</td>
+                        <td>{{ item.tanggal_selesai|date:"d M Y" }}</td>
+                        <td class="text-center">
+                            {# Beri tanda merah jika melebihi target #}
+                            <span class="badge {% if item.durasi > item.fan.target_durasi_hari %}bg-danger{% else %}bg-success{% endif %}">
+                                {{ item.durasi }} hari
+                            </span>
+                        </td>
+                        <td class="text-center">{{ item.fan.target_durasi_hari }} hari</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+    {# Cek apakah kita punya data untuk kategori lainnya (Lulus, Gugur, dll) #}
+    {% elif santri_list %}
+        <h4 class="h5 mb-3">Daftar Santri ({{ santri_list|length }})</h4>
+        <ul class="list-group">
+            {% for santri in santri_list %}
+                <li class="list-group-item">
+                    <a href="{% url 'core:detail_santri' santri.pk %}">
+                        {{ santri.nama_lengkap }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+
+    {# Jika tidak ada data sama sekali #}
+    {% else %}
+        <div class="alert alert-info mt-4" role="alert">
+            Tidak ada data yang ditemukan untuk kategori dan periode ini.
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
