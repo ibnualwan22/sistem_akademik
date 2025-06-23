@@ -15,7 +15,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Ambil Secret Key dari environment variable.
 # Ini WAJIB diatur di Render untuk keamanan.
-SECRET_KEY = os.environ.get('SECRET_KEY')
+# Ambil Secret Key dari environment variable, beri nilai default untuk lokal.
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-ini-hanya-untuk-lokal-dan-tidak-apa-apa')
 
 # DEBUG=True jika ada env var DEBUG=True, jika tidak maka otomatis False.
 # Di Render, JANGAN set variabel DEBUG agar otomatis False (aman).
