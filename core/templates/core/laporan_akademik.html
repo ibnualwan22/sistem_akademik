@@ -5,41 +5,58 @@
 
 {% block content %}
 <script>
-  /* ↓ letakkan SETELAH blok {{ context }} tapi SEBELUM membuat grafik */
-  const DETAIL_URL = "{% url 'core:laporan_rekap_detail' %}";
-  const START_DATE = "{{ start_date }}";
-  const END_DATE   = "{{ end_date }}";
+    // Ambil semua variabel filter dari konteks Django
+    const DETAIL_URL = "{% url 'core:laporan_rekap_detail' %}";
+    const START_DATE = "{{ start_date }}";
+    const END_DATE   = "{{ end_date }}";
+    const FAN_ID     = "{{ selected_fan_id }}"; // <-- TAMBAHKAN INI
 
-  function redirectToDetail(category) {
-      const params = new URLSearchParams({
-          category:   category,
-          start_date: START_DATE,
-          end_date:   END_DATE
-      });
-      window.location.href = `${DETAIL_URL}?${params.toString()}`;
-  }
+    function redirectToDetail(category) {
+        const params = new URLSearchParams({
+            category:   category,
+            start_date: START_DATE,
+            end_date:   END_DATE
+        });
+
+        // TAMBAHKAN BLOK INI:
+        // Tambahkan fan_id ke parameter HANYA JIKA ada nilainya
+        if (FAN_ID) {
+            params.append('fan_id', FAN_ID);
+        }
+        
+        // Redirect ke URL yang sudah lengkap dengan semua filter
+        window.location.href = `${DETAIL_URL}?${params.toString()}`;
+    }
 </script>
 
     <h1 class="mb-4">{{ page_title }}</h1>
 
     <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Filter Laporan</h5>
-            <form method="GET" action="{% url 'core:laporan_akademik' %}" class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label for="start_date" class="form-label">Dari Tanggal:</label>
-                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
-                </div>
-                <div class="col-md-5">
-                    <label for="end_date" class="form-label">Sampai Tanggal:</label>
-                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Filter</button>
-                </div>
-            </form>
-        </div>
+    <div class="card-body">
+        <h5 class="card-title">Filter Laporan</h5>
+        <form method="GET" action="{% url 'core:laporan_akademik' %}" class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">Dari Tanggal:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">Sampai Tanggal:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label for="fan_id" class="form-label">Filter per Fan:</label>
+                <select name="fan_id" id="fan_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">Semua Fan</option>
+                    {% for fan in all_fans %}
+                        <option value="{{ fan.id }}" {% if fan.id == selected_fan_id %}selected{% endif %}>
+                            {{ fan.nama_fan }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
     </div>
+</div>
 
     <div class="row">
         <div class="col-lg-6 mb-4">

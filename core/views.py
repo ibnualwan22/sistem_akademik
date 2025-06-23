@@ -156,128 +156,88 @@ def leaderboard_fan_view(request, fan_pk):
 # Ganti fungsi laporan_akademik yang lama dengan versi upgrade ini
 
 # Versi perbaikan untuk bagian awal fungsi laporan_akademik
+# GANTI LAGI FUNGSI INI DENGAN VERSI YANG SUDAH MEMFILTER PIE CHART
+# ==============================================================================
+# GANTI LAGI FUNGSI INI DAN PASTIKAN INDEN-NYA BENAR
+# ==============================================================================
+# ==============================================================================
+# GANTI TOTAL FUNGSI INI DENGAN VERSI FINAL (FIX PIE CHART & FILTER)
+# ==============================================================================
 def laporan_akademik(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
-
-    # Konversi string ke date, jika gagal atau kosong, gunakan default
-    try:
-        start_date = date.fromisoformat(start_date_str)
-    except (ValueError, TypeError):
-        # Default: 90 hari yang lalu
-        start_date = date.today() - timedelta(days=90)
+    selected_fan_id = request.GET.get('fan_id')
 
     try:
-        end_date = date.fromisoformat(end_date_str)
+        start_date = date.fromisoformat(start_date_str) if start_date_str else date.today() - timedelta(days=90)
+        end_date = date.fromisoformat(end_date_str) if end_date_str else date.today()
     except (ValueError, TypeError):
-        # Default: hari ini
         end_date = date.today()
-        
+        start_date = end_date - timedelta(days=90)
 
-# =================================================================
-    # KALKULASI ULANG UNTUK PIE CHART - VERSI FINAL DENGAN LOGIKA ANTI-DUPLIKASI
-    # =================================================================
+    # Filter dasar untuk tes
+    tes_filtered = RiwayatTes.objects.filter(tanggal_tes__range=[start_date, end_date])
+    if selected_fan_id and selected_fan_id.isdigit():
+        tes_filtered = tes_filtered.filter(sks__fan_id=selected_fan_id)
+
+    # --- PERBAIKAN LOGIKA PIE CHART (ANTI DUPLIKASI) ---
+    sesuai_target_count = 0
+    melebihi_target_count = 0
+    fan_selesai_dalam_periode = 0
     
-    # 1. Siapkan daftar kosong untuk menampung semua 'event' penyelesaian Fan yang valid
-    all_completion_events = []
+    # Tentukan Fan mana yang akan diperiksa
+    fans_to_check = Fan.objects.all()
+    if selected_fan_id and selected_fan_id.isdigit():
+        fans_to_check = fans_to_check.filter(id=selected_fan_id)
+
+    # Dapatkan santri yang relevan
+    relevant_santri_ids = tes_filtered.values_list('santri_id', flat=True).distinct()
+    semua_santri = Santri.objects.filter(id__in=relevant_santri_ids)
     
-    semua_santri = Santri.objects.filter(status='Aktif')
     for santri in semua_santri:
         sks_lulus_ids = santri.get_sks_lulus_ids()
-        if not sks_lulus_ids:
-            continue
-
-        fan_completion_dates = {}
-        for fan in Fan.objects.order_by('urutan'):
+        if not sks_lulus_ids: continue
+        
+        # Loop hanya pada fan yang sudah difilter
+        for fan in fans_to_check.order_by('urutan'):
             sks_in_fan = SKS.objects.filter(fan=fan)
+            # Cek apakah fan ini sudah diselesaikan oleh santri
             if sks_in_fan.exists() and sks_in_fan.filter(id__in=sks_lulus_ids).count() == sks_in_fan.count():
                 try:
-                    tgl_selesai = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
-                    fan_completion_dates[fan.id] = tgl_selesai
+                    tes_dalam_fan = RiwayatTes.objects.filter(santri=santri, sks__fan=fan)
+                    tgl_mulai = tes_dalam_fan.earliest('tanggal_tes').tanggal_tes
+                    tgl_selesai = tes_dalam_fan.latest('tanggal_tes').tanggal_tes
+                    
+                    # Hanya proses jika tanggal selesainya masuk dalam periode filter
+                    if start_date <= tgl_selesai <= end_date:
+                        fan_selesai_dalam_periode += 1 # Tambah untuk Bar Chart
+                        durasi = (tgl_selesai - tgl_mulai).days
+                        
+                        # Tambah untuk Pie Chart
+                        if durasi <= fan.target_durasi_hari:
+                            sesuai_target_count += 1
+                        else:
+                            melebihi_target_count += 1
                 except RiwayatTes.DoesNotExist:
                     pass
-        
-        if not fan_completion_dates:
-            continue
 
-        # 2. Kumpulkan semua event valid ke dalam daftar 'all_completion_events'
-        for fan_id, tgl_selesai in fan_completion_dates.items():
-            if not (start_date <= tgl_selesai <= end_date):
-                continue
+    # --- PERHITUNGAN BAR CHART (TETAP SAMA) ---
+    total_tes = tes_filtered.count()
+    jumlah_lulus = tes_filtered.filter(nilai__gte=F('sks__nilai_minimal')).count()
+    jumlah_gugur = tes_filtered.filter(nilai__lt=F('sks__nilai_minimal')).count()
 
-            fan_obj = Fan.objects.get(id=fan_id)
-            
-            tgl_mulai = None
-            if fan_obj.urutan == 1:
-                try: tgl_mulai = RiwayatTes.objects.filter(santri=santri).earliest('tanggal_tes').tanggal_tes
-                except RiwayatTes.DoesNotExist: pass
-            else:
-                try:
-                    fan_sebelumnya = Fan.objects.get(urutan=fan_obj.urutan - 1)
-                    tgl_mulai = fan_completion_dates.get(fan_sebelumnya.id)
-                except Fan.DoesNotExist: pass
-            
-            if tgl_mulai is None:
-                continue
-            
-            # Jika semua data valid, tambahkan event ini ke daftar
-            all_completion_events.append({
-                'durasi': (tgl_selesai - tgl_mulai).days,
-                'target': fan_obj.target_durasi_hari
-            })
-
-    # 3. Setelah loop selesai, proses daftar yang sudah terkumpul
-    
-    # Untuk Bar Chart: Jumlah Fan Selesai adalah total event yang terkumpul
-    fan_selesai_dalam_periode = len(all_completion_events)
-    
-    # Untuk Pie Chart: Hitung dari daftar event
-    sesuai_target_count = len([event for event in all_completion_events if event['durasi'] <= event['target']])
-    melebihi_target_count = len([event for event in all_completion_events if event['durasi'] > event['target']])
-
-
-    # =================================================================
-    # KALKULASI UNTUK BAR CHART (REKAP TES) - VERSI PERBAIKAN
-    # =================================================================
-    tes_filtered = RiwayatTes.objects.filter(tanggal_tes__range=[start_date, end_date])
-    
-    # Menghitung jumlah SANTRI UNIK yang ikut tes di periode ini
-    total_santri_ikut_tes = tes_filtered.values('santri_id').distinct().count()
-    
-    # Menghitung jumlah SANTRI UNIK yang punya setidaknya satu tes LULUS
-    santri_lulus = tes_filtered.filter(nilai__gte=F('sks__nilai_minimal')).values('santri_id').distinct().count()
-    
-    # Menghitung jumlah SANTRI UNIK yang punya setidaknya satu tes GUGUR
-    # Perlu dihitung terpisah karena satu santri bisa lulus dan gugur di periode yang sama
-    santri_gugur = tes_filtered.filter(nilai__lt=F('sks__nilai_minimal')).values('santri_id').distinct().count()
-
-    # Siapkan data untuk dikirim ke template
-    labels_target = ['Sesuai Target', 'Melebihi Target']
-    data_target = [sesuai_target_count, melebihi_target_count]
-    
-    # Ganti label 'Total Tes' menjadi lebih deskriptif
-    labels_rekap = ['Santri Ikut Tes', 'Santri Lulus', 'Santri Gugur', 'Fan Selesai']
-    data_rekap = [total_santri_ikut_tes, santri_lulus, santri_gugur, fan_selesai_dalam_periode]
-    # ---- DEBUG: cetak hasil hitungan sebelum dikirim ke template ----
-    logger.debug("Target  – Sesuai: %s | Melebihi: %s", sesuai_target_count, melebihi_target_count)
-    logger.debug(
-        "Rekap   – Total: %s | Lulus: %s | Gugur: %s | Fan Selesai: %s",
-        total_santri_ikut_tes, santri_lulus, santri_gugur, fan_selesai_dalam_periode
-    )
-
-     # Siapkan data untuk dikirim ke template
-    labels_target = ['Sesuai Target', 'Melebihi Target']
-    data_target   = [sesuai_target_count, melebihi_target_count]
-    labels_rekap  = ['Total Tes', 'Lulus', 'Gugur', 'Fan Selesai']
-    data_rekap    = [total_santri_ikut_tes, santri_lulus, santri_gugur, fan_selesai_dalam_periode]
+    # --- KONTEKS (TETAP SAMA) ---
+    all_fans = Fan.objects.all().order_by('urutan')
     konteks = {
         'page_title': 'Laporan Rekapitulasi Tes',
-        'labels_target_json': json.dumps(labels_target),
-        'data_target_json': json.dumps(data_target),
-        'labels_rekap_json': json.dumps(labels_rekap),
-        'data_rekap_json': json.dumps(data_rekap),
         'start_date': start_date.isoformat(),
         'end_date': end_date.isoformat(),
+        'all_fans': all_fans,
+        'selected_fan_id': int(selected_fan_id) if selected_fan_id and selected_fan_id.isdigit() else '',
+        'labels_target_json': json.dumps(['Sesuai Target', 'Melebihi Target']),
+        'data_target_json': json.dumps([sesuai_target_count, melebihi_target_count]),
+        'labels_rekap_json': json.dumps(['Total Tes', 'Lulus', 'Gugur', 'Fan Selesai']),
+        'data_rekap_json': json.dumps([total_tes, jumlah_lulus, jumlah_gugur, fan_selesai_dalam_periode]),
     }
     return render(request, 'core/laporan_akademik.html', konteks)
 # ==============================================================================
@@ -294,21 +254,17 @@ def daftar_sks_view(request):
 
 
 # ==============================================================================
-# GANTI FUNGSI LAMA ANDA DENGAN VERSI FINAL DENGAN STRUKTUR YG SUDAH BENAR INI
+# GANTI TOTAL FUNGSI INI DI views.py ANDA DENGAN VERSI FINAL DI BAWAH
 # ==============================================================================
 # ==============================================================================
-# GANTI FUNGSI LAMA ANDA DENGAN VERSI BARU YANG MENGHASILKAN DATA SERAGAM INI
-# ==============================================================================
-# ==============================================================================
-# GANTI FUNGSI LAMA ANDA DENGAN VERSI FINAL YANG SUDAH DIPERIKSA ULANG INI
+# GANTI TOTAL FUNGSI INI DAN PASTIKAN INDEN-NYA BENAR
 # ==============================================================================
 def laporan_rekap_detail(request):
-    # 1. Ambil parameter
     category = request.GET.get('category', '')
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
+    selected_fan_id = request.GET.get('fan_id')
 
-    # 2. Inisialisasi konteks
     konteks = {
         'page_title': f'Detail Kategori: {category.replace("_", " ")}',
         'start_date': start_date_str,
@@ -317,83 +273,87 @@ def laporan_rekap_detail(request):
         'unified_list': [],
     }
 
-    # 3. Blok utama pemrosesan data
     try:
         start_date = date.fromisoformat(start_date_str)
         end_date = date.fromisoformat(end_date_str)
         
         unified_list = []
 
+        base_sks_query = SKS.objects.all()
+        if selected_fan_id and selected_fan_id.isdigit():
+            base_sks_query = base_sks_query.filter(fan_id=selected_fan_id)
+
         # A. Logika untuk kategori dari PIE CHART (Capaian Target)
         if category in ['Sesuai Target', 'Melebihi Target']:
-            # ... (Logika untuk kategori ini sudah benar, tidak ada perubahan) ...
-            santri_aktif = Santri.objects.filter(status='Aktif')
+            santri_aktif_ids = RiwayatTes.objects.filter(
+                tanggal_tes__range=[start_date, end_date],
+                sks__in=base_sks_query
+            ).values_list('santri_id', flat=True).distinct()
+            santri_aktif = Santri.objects.filter(id__in=santri_aktif_ids)
+            
             for santri in santri_aktif:
                 sks_lulus_ids = santri.get_sks_lulus_ids()
                 if not sks_lulus_ids: continue
-                fan_completion_dates = {}
-                for fan in Fan.objects.order_by('urutan'):
+                
+                fans_to_check = Fan.objects.all()
+                if selected_fan_id and selected_fan_id.isdigit():
+                    fans_to_check = fans_to_check.filter(id=selected_fan_id)
+
+                for fan in fans_to_check.order_by('urutan'):
                     sks_in_fan = SKS.objects.filter(fan=fan)
                     if sks_in_fan.exists() and sks_in_fan.filter(id__in=sks_lulus_ids).count() == sks_in_fan.count():
                         try:
-                            tgl_selesai = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
-                            fan_completion_dates[fan.id] = tgl_selesai
-                        except RiwayatTes.DoesNotExist: pass
-                if not fan_completion_dates: continue
-                for fan_id, tgl_selesai in fan_completion_dates.items():
-                    if not (start_date <= tgl_selesai <= end_date): continue
-                    fan_obj = Fan.objects.get(id=fan_id)
-                    tgl_mulai = None
-                    if fan_obj.urutan == 1:
-                        try: tgl_mulai = RiwayatTes.objects.filter(santri=santri).earliest('tanggal_tes').tanggal_tes
-                        except RiwayatTes.DoesNotExist: pass
-                    else:
-                        try:
-                            fan_sebelumnya = Fan.objects.get(urutan=fan_obj.urutan - 1)
-                            tgl_mulai = fan_completion_dates.get(fan_sebelumnya.id)
-                        except Fan.DoesNotExist: pass
-                    if tgl_mulai is None: continue
-                    unified_list.append({
-                        'santri': santri,
-                        'tanggal_event': tgl_selesai,
-                        'keterangan': f"Selesai Fan ({category})",
-                        'detail_objek': fan_obj.nama_fan
-                    })
+                            tes_dalam_fan = RiwayatTes.objects.filter(santri=santri, sks__fan=fan)
+                            tgl_mulai = tes_dalam_fan.earliest('tanggal_tes').tanggal_tes
+                            tgl_selesai = tes_dalam_fan.latest('tanggal_tes').tanggal_tes
+                            
+                            if not (start_date <= tgl_selesai <= end_date): continue
+
+                            durasi = (tgl_selesai - tgl_mulai).days
+                            status_santri = "Sesuai Target" if durasi <= fan.target_durasi_hari else "Melebihi Target"
+                            
+                            if status_santri == category:
+                                unified_list.append({
+                                    'santri': santri,
+                                    'tanggal_event': tgl_selesai,
+                                    'keterangan': f"Selesai Fan ({category})",
+                                    'detail_objek': fan.nama_fan
+                                })
+                        except RiwayatTes.DoesNotExist:
+                            pass
 
         # B. Logika untuk 'Fan Selesai'
         elif category == 'Fan Selesai':
-            santri_fan_selesai_ids = set()
-            santri_aktif = Santri.objects.filter(status='Aktif')
+            santri_aktif = Santri.objects.filter(status='Aktif', riwayat_tes__sks__in=base_sks_query).distinct()
             for santri in santri_aktif:
                 sks_lulus_ids = santri.get_sks_lulus_ids()
                 if not sks_lulus_ids: continue
-                for fan in Fan.objects.all():
+                
+                fans_to_check = Fan.objects.all()
+                if selected_fan_id and selected_fan_id.isdigit():
+                    fans_to_check = fans_to_check.filter(id=selected_fan_id)
+
+                for fan in fans_to_check.order_by('urutan'):
                     sks_in_fan = SKS.objects.filter(fan=fan)
                     if sks_in_fan.exists() and sks_in_fan.filter(id__in=sks_lulus_ids).count() == sks_in_fan.count():
                         try:
                             tanggal_selesai_fan = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
                             if start_date <= tanggal_selesai_fan <= end_date:
-                                santri_fan_selesai_ids.add(santri.id)
-                                break
-                        except RiwayatTes.DoesNotExist: pass
-            
-            for santri_id in santri_fan_selesai_ids:
-                santri_obj = Santri.objects.get(id=santri_id)
-                try:
-                    # Ambil tes terakhir yang relevan untuk tanggal event
-                    latest_test = RiwayatTes.objects.filter(santri=santri_obj, tanggal_tes__range=[start_date, end_date]).latest('tanggal_tes')
-                    unified_list.append({
-                        'santri': santri_obj,
-                        'tanggal_event': latest_test.tanggal_tes,
-                        'keterangan': 'Menyelesaikan Fan',
-                        'detail_objek': latest_test.sks.fan.nama_fan
-                    })
-                except RiwayatTes.DoesNotExist:
-                    pass
+                                unified_list.append({
+                                    'santri': santri,
+                                    'tanggal_event': tanggal_selesai_fan,
+                                    'keterangan': 'Menyelesaikan Fan',
+                                    'detail_objek': fan.nama_fan
+                                })
+                        except RiwayatTes.DoesNotExist:
+                            pass
 
         # C. Logika untuk Lulus, Gugur, Ikut Tes
         else:
-            tes_dalam_periode = RiwayatTes.objects.filter(tanggal_tes__range=[start_date, end_date])
+            tes_dalam_periode = RiwayatTes.objects.filter(
+                tanggal_tes__range=[start_date, end_date],
+                sks__in=base_sks_query
+            )
             relevant_tests = RiwayatTes.objects.none()
             if category == 'Santri Ikut Tes' or category == 'Total Tes':
                 relevant_tests = tes_dalam_periode
@@ -401,7 +361,7 @@ def laporan_rekap_detail(request):
                 relevant_tests = tes_dalam_periode.filter(nilai__gte=F('sks__nilai_minimal'))
             elif category == 'Santri Gugur'or category == 'Gugur':
                 relevant_tests = tes_dalam_periode.filter(nilai__lt=F('sks__nilai_minimal'))
-
+            
             for tes in relevant_tests.select_related('santri', 'sks'):
                 unified_list.append({
                     'santri': tes.santri,
@@ -409,8 +369,7 @@ def laporan_rekap_detail(request):
                     'keterangan': f"{tes.status_kelulusan} Tes",
                     'detail_objek': tes.sks.nama_sks
                 })
-
-        # Urutkan daftar seragam berdasarkan tanggal event
+        
         konteks['unified_list'] = sorted(unified_list, key=lambda x: x['tanggal_event'], reverse=True)
 
     except (ValueError, TypeError):

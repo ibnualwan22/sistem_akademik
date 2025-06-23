@@ -10,28 +10,41 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
-# sistem_akademik/settings.py
 import os
+from pathlib import Path
 import logging.config
 
-# ...
-
-# Ambil SECRET_KEY dari environment variable, bukan ditulis langsung
+# =======================
+# Basic secret / debug
+# =======================
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-# DEBUG akan menjadi False di Render, tapi tetap True saat dijalankan di komputer lokal
+# DEBUG: True di lokal, False di Render (atau sesuai ENV)
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# Ambil ALLOWED_HOSTS dari environment variable
-ALLOWED_HOSTS_STR = os.environ.get('ALLOWED_HOSTS')
-if ALLOWED_HOSTS_STR:
-    ALLOWED_HOSTS = ALLOWED_HOSTS_STR.split(',')
-else:
-    ALLOWED_HOSTS = [] # Kosongkan jika tidak ada, atau isi default untuk lokal
+# =======================
+# Allowed hosts
+# =======================
+ALLOWED_HOSTS = []
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# 1) Host bawaan Render
+external_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if external_host:
+    ALLOWED_HOSTS.append(external_host)
+
+# 2) Host tambahan dari ENV custom (mis. ALLOWED_HOSTS="dom1.com,dom2.com")
+ALLOWED_HOSTS_STR = os.environ.get("ALLOWED_HOSTS")
+if ALLOWED_HOSTS_STR:
+    ALLOWED_HOSTS.extend([h.strip() for h in ALLOWED_HOSTS_STR.split(',') if h.strip()])
+
+# 3) Host untuk lokal/development
+ALLOWED_HOSTS += ["127.0.0.1", "localhost"]
+
+# =======================
+# Base dir
+# =======================
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 
 # Quick-start development settings - unsuitable for production
