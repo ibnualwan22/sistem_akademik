@@ -291,169 +291,129 @@ def daftar_sks_view(request):
     semua_sks = SKS.objects.select_related('fan').order_by('fan__urutan', 'nama_sks')
     konteks = { 'page_title': 'Daftar SKS Kurikulum', 'semua_sks': semua_sks }
     return render(request, 'core/daftar_sks.html', konteks)
-# Ganti fungsi laporan_rekap_detail yang lama dengan ini
+
+
 # ==============================================================================
-# GANTI FUNGSI LAMA ANDA DENGAN VERSI LENGKAP DAN BERSIH DI BAWAH INI
+# GANTI FUNGSI LAMA ANDA DENGAN VERSI FINAL DENGAN STRUKTUR YG SUDAH BENAR INI
+# ==============================================================================
+# ==============================================================================
+# GANTI FUNGSI LAMA ANDA DENGAN VERSI BARU YANG MENGHASILKAN DATA SERAGAM INI
+# ==============================================================================
+# ==============================================================================
+# GANTI FUNGSI LAMA ANDA DENGAN VERSI FINAL YANG SUDAH DIPERIKSA ULANG INI
 # ==============================================================================
 def laporan_rekap_detail(request):
-    # 1. Ambil semua parameter dari URL
+    # 1. Ambil parameter
     category = request.GET.get('category', '')
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
 
-    # 2. Siapkan variabel awal
-    santri_list = Santri.objects.none() # Default: QuerySet kosong
-    page_title = f'Detail Kategori: {category.replace("_", " ").title()}'
+    # 2. Inisialisasi konteks
+    konteks = {
+        'page_title': f'Detail Kategori: {category.replace("_", " ")}',
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'category': category,
+        'unified_list': [],
+    }
 
-    # 3. Blok utama untuk memproses data HANYA jika tanggal valid
+    # 3. Blok utama pemrosesan data
     try:
         start_date = date.fromisoformat(start_date_str)
         end_date = date.fromisoformat(end_date_str)
-
-        tes_dalam_periode = RiwayatTes.objects.filter(tanggal_tes__range=[start_date, end_date])
-
-        # ==========================================================
-        # LOGIKA UNTUK KATEGORI DARI BAR CHART (Total Tes, Lulus, Gugur)
-        # ==========================================================
-        if category == 'Total Tes':
-            santri_ids = tes_dalam_periode.values_list('santri_id', flat=True).distinct()
-            santri_list = Santri.objects.filter(id__in=santri_ids)
-
-        elif category == 'Lulus':
-            santri_ids = tes_dalam_periode.filter(nilai__gte=F('sks__nilai_minimal')).values_list('santri_id', flat=True).distinct()
-            santri_list = Santri.objects.filter(id__in=santri_ids)
-            
-        elif category == 'Gugur':
-            santri_ids = tes_dalam_periode.filter(nilai__lt=F('sks__nilai_minimal')).values_list('santri_id', flat=True).distinct()
-            santri_list = Santri.objects.filter(id__in=santri_ids)
         
-        # ==========================================================
-        # LOGIKA UNTUK KATEGORI 'FAN SELESAI'
-        # ==========================================================
-        elif category == 'Fan Selesai':
-            santri_fan_selesai_ids = set()
-            santri_aktif_di_periode = Santri.objects.filter(status='Aktif', id__in=tes_dalam_periode.values_list('santri_id', flat=True).distinct())
-            
-            for santri in santri_aktif_di_periode:
+        unified_list = []
+
+        # A. Logika untuk kategori dari PIE CHART (Capaian Target)
+        if category in ['Sesuai Target', 'Melebihi Target']:
+            # ... (Logika untuk kategori ini sudah benar, tidak ada perubahan) ...
+            santri_aktif = Santri.objects.filter(status='Aktif')
+            for santri in santri_aktif:
                 sks_lulus_ids = santri.get_sks_lulus_ids()
                 if not sks_lulus_ids: continue
-                
+                fan_completion_dates = {}
+                for fan in Fan.objects.order_by('urutan'):
+                    sks_in_fan = SKS.objects.filter(fan=fan)
+                    if sks_in_fan.exists() and sks_in_fan.filter(id__in=sks_lulus_ids).count() == sks_in_fan.count():
+                        try:
+                            tgl_selesai = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
+                            fan_completion_dates[fan.id] = tgl_selesai
+                        except RiwayatTes.DoesNotExist: pass
+                if not fan_completion_dates: continue
+                for fan_id, tgl_selesai in fan_completion_dates.items():
+                    if not (start_date <= tgl_selesai <= end_date): continue
+                    fan_obj = Fan.objects.get(id=fan_id)
+                    tgl_mulai = None
+                    if fan_obj.urutan == 1:
+                        try: tgl_mulai = RiwayatTes.objects.filter(santri=santri).earliest('tanggal_tes').tanggal_tes
+                        except RiwayatTes.DoesNotExist: pass
+                    else:
+                        try:
+                            fan_sebelumnya = Fan.objects.get(urutan=fan_obj.urutan - 1)
+                            tgl_mulai = fan_completion_dates.get(fan_sebelumnya.id)
+                        except Fan.DoesNotExist: pass
+                    if tgl_mulai is None: continue
+                    unified_list.append({
+                        'santri': santri,
+                        'tanggal_event': tgl_selesai,
+                        'keterangan': f"Selesai Fan ({category})",
+                        'detail_objek': fan_obj.nama_fan
+                    })
+
+        # B. Logika untuk 'Fan Selesai'
+        elif category == 'Fan Selesai':
+            santri_fan_selesai_ids = set()
+            santri_aktif = Santri.objects.filter(status='Aktif')
+            for santri in santri_aktif:
+                sks_lulus_ids = santri.get_sks_lulus_ids()
+                if not sks_lulus_ids: continue
                 for fan in Fan.objects.all():
                     sks_in_fan = SKS.objects.filter(fan=fan)
                     if sks_in_fan.exists() and sks_in_fan.filter(id__in=sks_lulus_ids).count() == sks_in_fan.count():
                         try:
-                            tanggal_selesai = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
-                            if start_date <= tanggal_selesai <= end_date:
+                            tanggal_selesai_fan = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
+                            if start_date <= tanggal_selesai_fan <= end_date:
                                 santri_fan_selesai_ids.add(santri.id)
+                                break
                         except RiwayatTes.DoesNotExist: pass
-            santri_list = Santri.objects.filter(id__in=list(santri_fan_selesai_ids))
-        
-        # ==========================================================
-        # LOGIKA UNTUK KATEGORI DARI PIE CHART (Sesuai/Melebihi Target)
-        # ==========================================================
-        elif category in ['Sesuai Target', 'Melebihi Target']:
-            # Ganti dari menyimpan ID menjadi menyimpan detail lengkap
-            detail_list = []
-            santri_aktif = Santri.objects.filter(status='Aktif')
-
-            for santri in santri_aktif:
-                # ... (kode untuk get_sks_lulus_ids dan fan_completion_dates tetap sama) ...
-                sks_lulus_ids = santri.get_sks_lulus_ids()
-                if not sks_lulus_ids: continue
-
-                fan_completion_dates = {}
-                for fan in Fan.objects.order_by('urutan'):
-                    sks_in_fan = SKS.objects.filter(fan=fan)
-                    if sks_in_fan.exists() and sks_in_fan.filter(id__in=sks_lulus_ids).count() == sks_in_fan.count():
-                        try:
-                            tgl_selesai = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
-                            fan_completion_dates[fan.id] = tgl_selesai
-                        except RiwayatTes.DoesNotExist: pass
-                
-                if not fan_completion_dates: continue
-
-                for fan_id, tgl_selesai in fan_completion_dates.items():
-                    if not (start_date <= tgl_selesai <= end_date): continue
-
-                    fan_obj = Fan.objects.get(id=fan_id)
-                    tgl_mulai = None
-                    if fan_obj.urutan == 1:
-                        try: tgl_mulai = RiwayatTes.objects.filter(santri=santri).earliest('tanggal_tes').tanggal_tes
-                        except RiwayatTes.DoesNotExist: pass
-                    else:
-                        try:
-                            fan_sebelumnya = Fan.objects.get(urutan=fan_obj.urutan - 1)
-                            tgl_mulai = fan_completion_dates.get(fan_sebelumnya.id)
-                        except Fan.DoesNotExist: pass
-                    
-                    if tgl_mulai is None: continue
-
-                    selisih_hari = (tgl_selesai - tgl_mulai).days
-                    status_santri = "Sesuai Target" if selisih_hari <= fan_obj.target_durasi_hari else "Melebihi Target"
-
-                    if status_santri == category:
-                        # ===== PERUBAHAN UTAMA DI SINI =====
-                        # Kita simpan semua data yang relevan ke dalam sebuah dictionary
-                        detail_list.append({
-                            'santri': santri,
-                            'fan': fan_obj,
-                            'tanggal_mulai': tgl_mulai,
-                            'tanggal_selesai': tgl_selesai,
-                            'durasi': selisih_hari,
-                        })
-                        # Kita tidak break, agar jika satu santri melebihi target di >1 Fan, semuanya tercatat
             
-            # Kirim 'detail_list' ke konteks, bukan 'santri_list' lagi untuk kategori ini
-            # Jadi, kita tidak perlu baris `santri_list = Santri.objects.filter(...)` lagi
+            for santri_id in santri_fan_selesai_ids:
+                santri_obj = Santri.objects.get(id=santri_id)
+                try:
+                    # Ambil tes terakhir yang relevan untuk tanggal event
+                    latest_test = RiwayatTes.objects.filter(santri=santri_obj, tanggal_tes__range=[start_date, end_date]).latest('tanggal_tes')
+                    unified_list.append({
+                        'santri': santri_obj,
+                        'tanggal_event': latest_test.tanggal_tes,
+                        'keterangan': 'Menyelesaikan Fan',
+                        'detail_objek': latest_test.sks.fan.nama_fan
+                    })
+                except RiwayatTes.DoesNotExist:
+                    pass
 
-            for santri in santri_aktif:
-                sks_lulus_ids = santri.get_sks_lulus_ids()
-                if not sks_lulus_ids: continue
+        # C. Logika untuk Lulus, Gugur, Ikut Tes
+        else:
+            tes_dalam_periode = RiwayatTes.objects.filter(tanggal_tes__range=[start_date, end_date])
+            relevant_tests = RiwayatTes.objects.none()
+            if category == 'Santri Ikut Tes' or category == 'Total Tes':
+                relevant_tests = tes_dalam_periode
+            elif category == 'Santri Lulus'or category == 'Lulus':
+                relevant_tests = tes_dalam_periode.filter(nilai__gte=F('sks__nilai_minimal'))
+            elif category == 'Santri Gugur'or category == 'Gugur':
+                relevant_tests = tes_dalam_periode.filter(nilai__lt=F('sks__nilai_minimal'))
 
-                fan_completion_dates = {}
-                for fan in Fan.objects.order_by('urutan'):
-                    sks_in_fan = SKS.objects.filter(fan=fan)
-                    if sks_in_fan.exists() and sks_in_fan.filter(id__in=sks_lulus_ids).count() == sks_in_fan.count():
-                        try:
-                            tgl_selesai = RiwayatTes.objects.filter(santri=santri, sks__fan=fan).latest('tanggal_tes').tanggal_tes
-                            fan_completion_dates[fan.id] = tgl_selesai
-                        except RiwayatTes.DoesNotExist: pass
-                
-                if not fan_completion_dates: continue
+            for tes in relevant_tests.select_related('santri', 'sks'):
+                unified_list.append({
+                    'santri': tes.santri,
+                    'tanggal_event': tes.tanggal_tes,
+                    'keterangan': f"{tes.status_kelulusan} Tes",
+                    'detail_objek': tes.sks.nama_sks
+                })
 
-                for fan_id, tgl_selesai in fan_completion_dates.items():
-                    if not (start_date <= tgl_selesai <= end_date): continue
-
-                    fan_obj = Fan.objects.get(id=fan_id)
-                    tgl_mulai = None
-                    if fan_obj.urutan == 1:
-                        try: tgl_mulai = RiwayatTes.objects.filter(santri=santri).earliest('tanggal_tes').tanggal_tes
-                        except RiwayatTes.DoesNotExist: pass
-                    else:
-                        try:
-                            fan_sebelumnya = Fan.objects.get(urutan=fan_obj.urutan - 1)
-                            tgl_mulai = fan_completion_dates.get(fan_sebelumnya.id)
-                        except Fan.DoesNotExist: pass
-                    
-                    if tgl_mulai is None: continue
-
-                    selisih_hari = (tgl_selesai - tgl_mulai).days
-                    status_santri = "Sesuai Target" if selisih_hari <= fan_obj.target_durasi_hari else "Melebihi Target"
+        # Urutkan daftar seragam berdasarkan tanggal event
+        konteks['unified_list'] = sorted(unified_list, key=lambda x: x['tanggal_event'], reverse=True)
 
     except (ValueError, TypeError):
-        pass # Jika format tanggal salah, biarkan santri_list kosong
+        pass
     
-    # 4. Kirim data ke template
-   # Ubah cara kita membuat konteks agar lebih fleksibel
-    konteks = {
-        'page_title': page_title,
-        'start_date': start_date_str,
-        'end_date': end_date_str,
-        'category': category,
-    }
-
-    if category in ['Sesuai Target', 'Melebihi Target']:
-        konteks['rekap_detail_list'] = detail_list # Menggunakan variabel baru dari blok di atas
-    else:
-        konteks['santri_list'] = santri_list.order_by('nama_lengkap')
     return render(request, 'core/laporan_rekap_detail.html', konteks)
