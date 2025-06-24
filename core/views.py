@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # ==============================================================================
 def daftar_santri(request):
     total_santri_aktif = Santri.objects.filter(status='Aktif').count()
-    total_lulusan = Santri.objects.filter(status='Lulus').count()
+    total_pengurus = Santri.objects.filter(status='pengurus').count()
     total_sks = SKS.objects.count()
     today = date.today()
     aktivitas_terkini = RiwayatTes.objects.filter(tanggal_tes=today).order_by('-id')
@@ -40,7 +40,7 @@ def daftar_santri(request):
     konteks = {
         'page_title': 'Dashboard Utama',
         'total_santri_aktif': total_santri_aktif,
-        'total_lulusan': total_lulusan,
+        'total_pengurus': total_pengurus,
         'total_sks': total_sks,
         'aktivitas_terkini': aktivitas_terkini,
         'juara_per_fan': juara_per_fan,
@@ -54,11 +54,11 @@ def daftar_santri(request):
 def semua_santri_view(request):
     query = request.GET.get('q')
     santri_aktif_list = Santri.objects.filter(status='Aktif')
-    santri_lulus_list = Santri.objects.filter(status='Non-Aktif')
+    santri_lulus_list = Santri.objects.filter(status='pengurus')
     santri_nonaktif_list = Santri.objects.filter(status='Non-Aktif')
     if query:
         santri_aktif_list = santri_aktif_list.filter(nama_lengkap__icontains=query)
-        santri_lulus_list = santri_lulus_list.filter(nama_lengkap__icontains=query)
+        santri_list = santri_lulus_list.filter(nama_lengkap__icontains=query)
         santri_nonaktif_list = santri_nonaktif_list.filter(nama_lengkap__icontains=query)
     konteks = {
         'page_title': 'Daftar Lengkap Santri',

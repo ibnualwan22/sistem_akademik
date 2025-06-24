@@ -6,118 +6,146 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistem Akademik Takhossus{% endblock %}</title>
     
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
-    <!-- ===== INI BAGIAN PENTING: TAMBAHKAN LINK FONT AWESOME ===== -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
-    <!-- CSS Custom Anda -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <link rel="stylesheet" href="{% static 'core/css/custom.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/layout.css' %}">
 </head>
-<body class="d-flex flex-column min-vh-100">
 
-    <!-- ======================================================= -->
-    <!-- NAVBAR YANG SUDAH DIPERBAIKI STRUKTURNYA              -->
-    <!-- ======================================================= -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #2c3e50;">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'core:daftar_santri' %}">
-                <img src="{% static 'core/images/Takhossus.png' %}" alt="Logo" width="30" height="30" class="d-inline-block align-text-top me-2">
-                Takhossus
+<body>
+    <div class="page-wrapper">
+
+        <aside class="main-sidebar">
+            <a class="sidebar-brand" href="{% url 'core:daftar_santri' %}">
+                <img src="{% static 'core/images/Takhossus.png' %}" alt="Logo" width="30" height="30" class="me-2">
+                <span>Takhossus</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Grup Link Utama (Akan berada di kiri) -->
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:daftar_santri' %}"><i class="fas fa-home me-2"></i>Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:semua_santri' %}"><i class="fas fa-users me-2"></i>Daftar Santri</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:daftar_sks' %}"><i class="fas fa-list-alt me-2"></i>Daftar SKS</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:kurikulum' %}"><i class="fas fa-book me-2"></i>Kurikulum</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:laporan_akademik' %}"><i class="fas fa-chart-line me-2"></i>Laporan</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:riwayat_tes' %}"><i class="fas fa-history me-2"></i>Riwayat Tes</a>
-                    </li>
-                </ul>
-                
-                <!-- Grup Tombol Admin (Akan otomatis terdorong ke kanan) -->
-                <div class="d-flex">
-                    <a href="{% url 'admin:index' %}" class="btn btn-outline-light">Login Admin</a>
-                </div>
+
+            <ul class="nav sidebar-nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'core:daftar_santri' %}"><i class="fas fa-home me-2"></i>Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'core:semua_santri' %}"><i class="fas fa-users me-2"></i>Daftar Santri</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'core:daftar_sks' %}"><i class="fas fa-list-alt me-2"></i>Daftar SKS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'core:kurikulum' %}"><i class="fas fa-book me-2"></i>Kurikulum</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'core:laporan_akademik' %}"><i class="fas fa-chart-line me-2"></i>Laporan</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'core:riwayat_tes' %}"><i class="fas fa-history me-2"></i>Riwayat Tes</a>
+                </li>
+            </ul>
+
+            <div class="mt-auto pt-3">
+                 <a href="{% url 'admin:index' %}" class="btn btn-outline-light w-100">Login Admin</a>
             </div>
-        </div>
-    </nav>
+        </aside>
 
-    <main class="flex-grow-1">
-        {% block content %}
-        {% endblock %}
-    </main>
+        <div class="sidebar-overlay"></div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <div class="main-content">
+            
+            <header class="main-header">
+                <button class="btn" id="sidebar-toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h3 class="ms-3">{% block page_title %}Dashboard{% endblock %}</h3>
+            </header>
+
+            <main>
+                {% block content %}
+                {% endblock %}
+            </main>
+
+            <footer class="bg-dark text-white mt-5 py-4">
+                <div class="container-fluid"> <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <h5>Takhossus Pasca Amtsilati</h5>
+                            <p class="small text-white-50">
+                                Adalah Asrama khusus lulusan Amtsilati yang sedang dalam
+                                masa jenjang Madrasah Aliyah atau lebih, difokuskan untuk
+                                mendalami ilmu-ilmu keislaman secara terstruktur dan terukur.
+                            </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <h5>Alamat</h5>
+                            <p class="small text-white-50">
+                                Dk. Gg. Kenanga II, RT.09/RW.12,<br>
+                                Krasak, Sidorejo, Kec. Bangsri,<br>
+                                Kabupaten Jepara, Jawa Tengah.<br>
+                                59453
+                            </p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <h5>Media Sosial</h5>
+                            <div>
+                                <a href="https://www.youtube.com/@TakhossusPascaAmtsilati" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-youtube"></i></a>
+                                <a href="https://www.instagram.com/takhossus_/" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-instagram"></i></a>
+                                <a href="https://wa.me/6281227225453" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-whatsapp"></i></a>
+                                <a href="https://www.tiktok.com/@NAMA_TIKTOK_ANDA" target="_blank" class="text-white fs-4"><i class="fab fa-tiktok"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="mt-3">
+                    <div class="row">
+                        <div class="col text-center">
+                            <p class="small text-white-50">© Copyright {% now "Y" %} Takhossus Pasca Amtsilati. All Rights Reserved.</p>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+
+        </div> </div> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    {% block extra_js %}{% endblock %}
+    {% block extra_js %}
+    {% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" ...></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+            const overlay = document.querySelector('.sidebar-overlay');
+            const body = document.body;
 
-    <footer class="bg-dark text-white mt-5 py-4">
-        <div class="container">
-            <div class="row">
+            function toggleSidebar() {
+                if (window.innerWidth <= 991.98) {
+                    body.classList.toggle('sidebar-collapsed');
+                } else {
+                    if (body.classList.contains('sidebar-collapsed')) {
+                        body.classList.remove('sidebar-collapsed');
+                    } else {
+                        body.classList.add('sidebar-collapsed');
+                    }
+                }
+            }
 
-                <div class="col-md-5 mb-3">
-                    <h5>Takhossus Pasca Amtsilati</h5>
-                    <p class="small text-white-50">
-                        Adalah Asrama khusus lulusan Amtsilati yang sedang dalam
-                        masa jenjang Madrasah Aliyah atau lebih, difokuskan untuk
-                        mendalami ilmu-ilmu keislaman secara terstruktur dan terukur.
-                    </p>
-                </div>
+            if (window.innerWidth <= 991.98) {
+                body.classList.add('sidebar-collapsed');
+            }
 
-                <div class="col-md-4 mb-3">
-                    <h5>Alamat</h5>
-                    <p class="small text-white-50">
-                        Dk. Gg. Kenanga II, RT.09/RW.12,<br>
-                        Krasak, Sidorejo, Kec. Bangsri,<br>
-                        Kabupaten Jepara, Jawa Tengah.<br>
-                        59453
-                    </p>
-                </div>
+            if (sidebarToggleBtn) {
+                sidebarToggleBtn.addEventListener('click', function() {
+                    toggleSidebar();
+                });
+            }
 
-                <div class="col-md-3 mb-3">
-    <h5>Media Sosial</h5>
-    <div>
-        <a href="https://www.youtube.com/@TakhossusPascaAmtsilati" target="_blank" class="text-white me-3 fs-4"><i class="bi bi-youtube"></i></a>
-        
-        <a href="https://www.instagram.com/takhossus_/" target="_blank" class="text-white me-3 fs-4"><i class="bi bi-instagram"></i></a>
-        
-        <a href="https://wa.me/6281227225453" target="_blank" class="text-white me-3 fs-4"><i class="bi bi-whatsapp"></i></a>
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    if (window.innerWidth <= 991.98) {
+                        body.classList.add('sidebar-collapsed');
+                    }
+                });
+            }
+        });
+    </script>
 
-        <a href="https://www.tiktok.com/@NAMA_TIKTOK_ANDA" target="_blank" class="text-white fs-4"><i class="bi bi-tiktok"></i></a>
-    </div>
-</div>
-
-            </div>
-            <hr class="mt-3">
-            <div class="row">
-                <div class="col text-center">
-                    <p class="small text-white-50">&copy; Copyright {% now "Y" %} Takhossus Pasca Amtsilati. All Rights Reserved.</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-    </body>
+</body>
 </html>

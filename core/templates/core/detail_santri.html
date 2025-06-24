@@ -61,9 +61,9 @@
                         Durasi Studi: <strong>{{ data.durasi_studi }}</strong>
                         {% if data.status_target %}
                             {% if data.status_target == "Sesuai Target" %}
-                                <span class="badge bg-success-subtle text-success-emphasis rounded-pill ms-2">{{ data.status_target }}</span>
+                                <span class="badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill ms-2">{{ data.status_target }}</span>
                             {% else %}
-                                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill ms-2">{{ data.status_target }}</span>
+                                 <span class="badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill ms-2">{{ data.status_target }}</span>
                             {% endif %}
                         {% endif %}
                     </p>
