@@ -35,6 +35,7 @@ def daftar_santri(request):
     ).annotate(
         lulus_mingguan=Count('riwayat_tes', filter=Q(riwayat_tes__nilai__gte=F('riwayat_tes__sks__nilai_minimal')))
     ).order_by('-lulus_mingguan').first()
+    
 
     konteks = {
         'page_title': 'Dashboard Utama',
