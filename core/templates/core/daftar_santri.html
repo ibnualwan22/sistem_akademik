@@ -57,7 +57,7 @@
     <div class="row mt-4">
         <div class="col-md-7">
             <h4>Leaderboard Asrama Takhossus</h4>
-            <p class="text-muted small">Santri terbaik di setiap Fan berdasarkan jumlah SKS lulus.</p>
+            <p class="text-muted small">Santri terbaik di setiap Fan berdasarkan jumlah SKS terbanyak dan tercepat.</p>
             <div class="list-group">
                 {% for data in juara_per_fan %}
                     <a href="{% url 'core:leaderboard_fan' data.fan.pk %}" class="list-group-item list-group-item-action">

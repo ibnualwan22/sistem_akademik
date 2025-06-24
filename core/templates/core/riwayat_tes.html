@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    <!-- FORM FILTER BARU DENGAN KALENDER -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Filter Riwayat</h5>
+            <form method="GET" action="{% url 'core:riwayat_tes' %}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Dari Tanggal:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">Sampai Tanggal:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label for="fan_id" class="form-label">Fan:</label>
+                    <select name="fan_id" id="fan_id" class="form-select">
+                        <option value="">Semua Fan</option>
+                        {% for fan in all_fans %}
+                            <option value="{{ fan.id }}" {% if fan.id == selected_fan_id %}selected{% endif %}>
+                                {{ fan.nama_fan }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-primary w-100">Terapkan Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABEL DATA (STRUKTUR TABEL TETAP SAMA) -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Tanggal Tes</th>
+                    <th scope="col">Nama Santri</th>
+                    <th scope="col">Fan</th>
+                    <th scope="col">SKS / Kitab</th>
+                    <th scope="col" class="text-center">Nilai</th>
+                    <th scope="col" class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tes in riwayat_list %}
+                <tr>
+                    <td>{{ tes.tanggal_tes|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'core:detail_santri' tes.santri.pk %}">{{ tes.santri.nama_lengkap }}</a>
+                    </td>
+                    <td>{{ tes.sks.fan.nama_fan }}</td>
+                    <td>{{ tes.sks.nama_sks }}</td>
+                    <td class="text-center">{{ tes.nilai }}</td>
+                    <td class="text-center">
+                        {% if tes.status_kelulusan == "Lulus" %}
+                            <span class="badge bg-success">{{ tes.status_kelulusan }}</span>
+                        {% else %}
+                            <span class="badge bg-danger">{{ tes.status_kelulusan }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-5">
+                        Tidak ada data riwayat tes yang cocok dengan filter ini.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

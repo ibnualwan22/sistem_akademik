@@ -31,10 +31,11 @@
 
     <h1 class="mb-4">{{ page_title }}</h1>
 
-    <div class="card shadow-sm mb-4">
+    <!-- GANTI BAGIAN FORM FILTER LAMA ANDA DENGAN INI -->
+<div class="card shadow-sm mb-4">
     <div class="card-body">
         <h5 class="card-title">Filter Laporan</h5>
-        <form method="GET" action="{% url 'core:laporan_akademik' %}" class="row g-3 align-items-center">
+        <form method="GET" action="{% url 'core:laporan_akademik' %}" class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label for="start_date" class="form-label">Dari Tanggal:</label>
                 <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control">
@@ -45,7 +46,8 @@
             </div>
             <div class="col-md-4">
                 <label for="fan_id" class="form-label">Filter per Fan:</label>
-                <select name="fan_id" id="fan_id" class="form-select" onchange="this.form.submit()">
+                {# Menghapus atribut onchange dari select #}
+                <select name="fan_id" id="fan_id" class="form-select">
                     <option value="">Semua Fan</option>
                     {% for fan in all_fans %}
                         <option value="{{ fan.id }}" {% if fan.id == selected_fan_id %}selected{% endif %}>
@@ -54,9 +56,14 @@
                     {% endfor %}
                 </select>
             </div>
+            {# Menambahkan tombol submit #}
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary w-100">Terapkan Filter</button>
+            </div>
         </form>
     </div>
 </div>
+
 
     <div class="row">
         <div class="col-lg-6 mb-4">

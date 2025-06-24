@@ -323,3 +323,48 @@ def riwayat_tes_view(request):
         'selected_fan_id': int(selected_fan_id) if selected_fan_id and selected_fan_id.isdigit() else None,
     }
     return render(request, 'core/riwayat_tes.html', konteks)
+
+# Tambahkan fungsi baru ini di paling bawah file core/views.py
+
+# GANTI TOTAL FUNGSI INI DENGAN VERSI YANG MENGGUNAKAN FILTER TANGGAL
+def riwayat_tes_view(request):
+    """
+    Menampilkan halaman riwayat tes global dengan filter
+    berdasarkan rentang tanggal dan fan.
+    """
+    # Ambil nilai filter dari URL (jika ada)
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    selected_fan_id = request.GET.get('fan_id')
+
+    # Atur tanggal default jika input kosong, mirip halaman laporan
+    try:
+        start_date = date.fromisoformat(start_date_str) if start_date_str else date.today() - timedelta(days=365)
+        end_date = date.fromisoformat(end_date_str) if end_date_str else date.today()
+    except (ValueError, TypeError):
+        end_date = date.today()
+        start_date = end_date - timedelta(days=365)
+
+    # Query dasar untuk mengambil semua riwayat tes
+    riwayat_list = RiwayatTes.objects.select_related('santri', 'sks', 'sks__fan').all()
+
+    # Terapkan filter berdasarkan rentang tanggal
+    riwayat_list = riwayat_list.filter(tanggal_tes__range=[start_date, end_date])
+
+    # Terapkan filter fan jika ada
+    if selected_fan_id and selected_fan_id.isdigit():
+        riwayat_list = riwayat_list.filter(sks__fan_id=selected_fan_id)
+
+    # Kita tidak lagi butuh 'all_santri' untuk filter
+    all_fans = Fan.objects.all().order_by('urutan')
+
+    konteks = {
+        'page_title': 'Riwayat Tes Santri',
+        'riwayat_list': riwayat_list.order_by('-tanggal_tes', '-id'),
+        'all_fans': all_fans,
+        # Kirim nilai filter tanggal & fan yang dipilih kembali ke template
+        'start_date': start_date.isoformat(),
+        'end_date': end_date.isoformat(),
+        'selected_fan_id': int(selected_fan_id) if selected_fan_id and selected_fan_id.isdigit() else None,
+    }
+    return render(request, 'core/riwayat_tes.html', konteks)
