@@ -22,7 +22,7 @@
                 <div class="col-md-9">
                     <h2 class="mb-3">{{ santri.nama_lengkap }}</h2>
                     <p><strong>ID Santri:</strong> {{ santri.id_santri|default:"-" }}</p>
-                    <p><strong>Status:</strong> <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill">{{ santri.status }}</span></p>
+                    <p><strong>Status:</strong> <span class="badge bg-dark text-primary-emphasis border border-primary-subtle rounded-pill">{{ santri.status }}</span></p>
                     {% if fan_saat_ini %}
                         <p class="mb-0"><strong>Fan Saat Ini:</strong> 
                             <span class="badge {% if fan_saat_ini.nama_fan %}bg-primary{% else %}bg-success{% endif %} fs-6 rounded-pill">
