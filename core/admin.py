@@ -1,6 +1,7 @@
 # core/admin.py - VERSI FINAL DENGAN CUSTOM FILTER
 
 from django.contrib import admin
+from django.contrib.admin.models import LogEntry
 from .models import Fan, SKS, Santri, RiwayatTes, Pengurus
 
 # Filter custom untuk status kelulusan
@@ -68,3 +69,43 @@ class RiwayatTesAdmin(admin.ModelAdmin):
 class PengurusAdmin(admin.ModelAdmin):
     list_display = ('nama_lengkap', 'jabatan', 'nomor_whatsapp')
     search_fields = ('nama_lengkap', 'jabatan')
+
+@admin.register(LogEntry)
+class LogEntryAdmin(admin.ModelAdmin):
+    """
+    Konfigurasi untuk menampilkan riwayat aktivitas (LogEntry) di menu admin.
+    """
+    # Menampilkan kolom-kolom ini di daftar riwayat
+    list_display = ('action_time', 'user', 'get_action_description', 'object_repr', 'get_content_type')
+    
+    # Menambahkan filter di sidebar kanan
+    list_filter = ('action_time', 'user', 'content_type')
+
+    # Menjadikan semua field read-only, karena riwayat tidak boleh diubah
+    readonly_fields = ('action_time', 'user', 'content_type', 'object_id', 'object_repr', 'action_flag', 'change_message')
+
+    # Menonaktifkan tombol "Tambah Log Entry"
+    def has_add_permission(self, request):
+        return False
+
+    # Menonaktifkan kemampuan untuk mengubah log
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    # Menonaktifkan kemampuan untuk menghapus log
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    # Fungsi bantuan untuk membuat tampilan lebih ramah
+    @admin.display(description='Objek')
+    def get_content_type(self, obj):
+        return obj.content_type.name
+
+    @admin.display(description='Aksi', ordering='action_flag')
+    def get_action_description(self, obj):
+        action_map = {
+            1: "➕ Penambahan",
+            2: "✏️ Perubahan",
+            3: "❌ Penghapusan",
+        }
+        return action_map.get(obj.action_flag, '-')
