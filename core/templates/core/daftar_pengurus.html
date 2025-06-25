@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% for pengurus in semua_pengurus %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 text-center shadow-sm">
+            <div class="card-body">
+                <a href="{% url 'core:detail_pengurus' pengurus.pk %}" class="text-decoration-none text-dark">
+                    {% if pengurus.foto_profil %}
+                        <img src="{{ pengurus.foto_profil.url }}" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'core/images/default.png' %}" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% endif %}
+                    <h5 class="card-title">{{ pengurus.nama_lengkap }}</h5>
+                    <p class="card-text text-muted">{{ pengurus.jabatan }}</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p>Belum ada data pengurus yang ditambahkan.</p>
+    {% endfor %}
+</div>
+{% endblock %}

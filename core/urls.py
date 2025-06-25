@@ -19,4 +19,6 @@ urlpatterns = [
     path('santri/<int:santri_pk>/fan/<int:fan_pk>/', views.detail_fan_santri, name='detail_fan_santri'),
     path('laporan/detail/', views.laporan_rekap_detail, name='laporan_rekap_detail'),
     path('riwayat-tes/', views.riwayat_tes_view, name='riwayat_tes'),
+    path('pengurus/', views.daftar_pengurus_view, name='daftar_pengurus'),
+    path('pengurus/<int:pk>/', views.detail_pengurus_view, name='detail_pengurus'),
 ]

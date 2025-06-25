@@ -123,3 +123,20 @@ class RiwayatTes(models.Model):
     class Meta: # <-- TAMBAHKAN BLOK INI
         verbose_name = "Riwayat Tes"
         verbose_name_plural = "Riwayat Tes"
+
+        # Model Pengurus Takhossus
+
+class Pengurus(models.Model):
+    nama_lengkap = models.CharField(max_length=150, verbose_name="Nama Lengkap")
+    jabatan = models.CharField(max_length=100, blank=True, verbose_name="Jabatan")
+    alamat_kabupaten = models.CharField(max_length=100, blank=True, verbose_name="Kabupaten/Kota")
+    alamat_provinsi = models.CharField(max_length=100, blank=True, verbose_name="Provinsi")
+    nomor_whatsapp = models.CharField(max_length=20, blank=True, help_text="Gunakan format internasional, contoh: 6281234567890")
+    foto_profil = models.ImageField(upload_to='pengurus_photos/', blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Pengurus"
+        verbose_name_plural = "Pengurus"
+
+    def __str__(self):
+        return self.nama_lengkap

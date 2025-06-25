@@ -2,7 +2,7 @@
 
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Q, F
-from .models import Santri, RiwayatTes, SKS, Fan
+from .models import Santri, RiwayatTes, SKS, Fan, Pengurus
 from datetime import date, timedelta
 import json
 import logging
@@ -369,3 +369,21 @@ def riwayat_tes_view(request):
         'selected_fan_id': int(selected_fan_id) if selected_fan_id and selected_fan_id.isdigit() else None,
     }
     return render(request, 'core/riwayat_tes.html', konteks)
+
+# Tambahkan dua fungsi ini di views.py
+
+def daftar_pengurus_view(request):
+    semua_pengurus = Pengurus.objects.all().order_by('nama_lengkap')
+    konteks = {
+        'page_title': 'Struktur Kepengurusan',
+        'semua_pengurus': semua_pengurus
+    }
+    return render(request, 'core/daftar_pengurus.html', konteks)
+
+def detail_pengurus_view(request, pk):
+    pengurus = get_object_or_404(Pengurus, pk=pk)
+    konteks = {
+        'page_title': f'Profil Pengurus: {pengurus.nama_lengkap}',
+        'pengurus': pengurus
+    }
+    return render(request, 'core/detail_pengurus.html', konteks)

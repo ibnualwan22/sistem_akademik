@@ -1,7 +1,7 @@
 # core/admin.py - VERSI FINAL DENGAN CUSTOM FILTER
 
 from django.contrib import admin
-from .models import Fan, SKS, Santri, RiwayatTes
+from .models import Fan, SKS, Santri, RiwayatTes, Pengurus
 
 # Filter custom untuk status kelulusan
 class StatusKelulusanFilter(admin.SimpleListFilter):
@@ -63,3 +63,8 @@ class RiwayatTesAdmin(admin.ModelAdmin):
     @admin.display(description='SKS / Kitab', ordering='sks__nama_sks')
     def get_nama_sks(self, obj):
         return obj.sks.nama_sks
+    
+@admin.register(Pengurus)
+class PengurusAdmin(admin.ModelAdmin):
+    list_display = ('nama_lengkap', 'jabatan', 'nomor_whatsapp')
+    search_fields = ('nama_lengkap', 'jabatan')
