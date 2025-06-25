@@ -16,13 +16,13 @@
             </div>
         </div>
         <div class="col-lg-4 mb-3 card-link-wrapper">
-            <div class="card text-center text-bg-light h-100">
-                <a href="{% url 'core:semua_santri' %}" class="card-body text-decoration-none text-dark d-flex flex-column justify-content-center">
-                    <h5 class="card-title">Pengurus/Abdi Dalem</h5>
-                    <p class="card-text fs-1 fw-bold my-auto">{{ total_pengurus }}</p>
-                </a>
-            </div>
-        </div>
+    <div class="card text-center text-bg-light h-100">
+        <a href="{% url 'core:daftar_pengurus' %}" class="card-body text-decoration-none text-dark d-flex flex-column justify-content-center">
+            <h5 class="card-title">Jumlah Pengurus</h5>
+            <p class="card-text fs-1 fw-bold my-auto">{{ total_pengurus }}</p>
+        </a>
+    </div>
+</div>
         <div class="col-lg-4 mb-3 card-link-wrapper">
             <div class="card text-center text-bg-light h-100">
                 <a href="{% url 'core:daftar_sks' %}" class="card-body text-decoration-none text-dark d-flex flex-column justify-content-center">

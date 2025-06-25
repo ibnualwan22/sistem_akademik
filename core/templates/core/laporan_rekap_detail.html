@@ -47,7 +47,7 @@
                             {% elif "Gugur" in item.keterangan or "Melebihi" in item.keterangan %}
                                 <span class="badge bg-danger">{{ item.keterangan }}</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ item.keterangan }}</span>
+                                <span class="badge bg-danger">{{ item.keterangan }}</span>
                             {% endif %}
                         </td>
                         <td>{{ item.detail_objek }}</td>

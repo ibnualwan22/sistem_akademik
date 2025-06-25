@@ -1,7 +1,7 @@
 # core/views.py - VERSI LENGKAP DAN FINAL
 
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, Q, F
+from django.db.models import Count, Q, F, Max
 from .models import Santri, RiwayatTes, SKS, Fan, Pengurus
 from datetime import date, timedelta
 import json
@@ -12,30 +12,75 @@ logger = logging.getLogger(__name__)
 # ==============================================================================
 # FUNGSI 1: DASHBOARD UTAMA (daftar_santri)
 # ==============================================================================
+# Ganti seluruh fungsi daftar_santri Anda dengan ini
+
+# Ganti seluruh fungsi daftar_santri Anda dengan ini
+
 def daftar_santri(request):
+    # Statistik dan Juara per Fan (tidak berubah)
     total_santri_aktif = Santri.objects.filter(status='Aktif').count()
-    total_pengurus = Santri.objects.filter(status='pengurus').count()
+    total_pengurus = Pengurus.objects.count()
     total_sks = SKS.objects.count()
-    today = date.today()
-    aktivitas_terkini = RiwayatTes.objects.filter(tanggal_tes=today).order_by('-id')
-    
     semua_fan = Fan.objects.all().order_by('urutan')
+    santri_per_fan_pool = {fan.id: [] for fan in semua_fan} # Membuat "wadah" untuk setiap fan
+
+    for santri in Santri.objects.filter(status='Aktif'):
+        sks_lulus_ids = santri.get_sks_lulus_ids()
+        
+        # Cari Fan pertama yang belum diselesaikan oleh santri ini
+        fan_saat_ini_santri = None
+        for fan in semua_fan:
+            sks_dalam_fan = SKS.objects.filter(fan=fan)
+            if sks_dalam_fan.exists() and sks_dalam_fan.filter(id__in=sks_lulus_ids).count() < sks_dalam_fan.count():
+                fan_saat_ini_santri = fan
+                break # Ditemukan, keluar dari loop fan untuk santri ini
+        
+        # Jika santri punya fan saat ini (belum lulus semua), masukkan ke pool
+        if fan_saat_ini_santri:
+            santri_per_fan_pool[fan_saat_ini_santri.id].append(santri.id)
+
+    # TAHAP 2: Mencari juara dari setiap kelompok/pool yang sudah dibuat
     juara_per_fan = []
     for fan in semua_fan:
-        peringkat_fan = Santri.objects.filter(status='Aktif', riwayat_tes__sks__fan=fan).annotate(
-            jumlah_lulus_di_fan=Count('riwayat_tes__sks', distinct=True, filter=Q(riwayat_tes__sks__fan=fan) & Q(riwayat_tes__nilai__gte=F('riwayat_tes__sks__nilai_minimal')))
-        ).filter(jumlah_lulus_di_fan__gt=0).order_by('-jumlah_lulus_di_fan', 'id')
+        pool_santri_ids = santri_per_fan_pool.get(fan.id, [])
+        if not pool_santri_ids:
+            continue # Lompati fan ini jika tidak ada santri di dalamnya
+
+        # Query untuk mencari peringkat di dalam pool tersebut
+        peringkat_fan = Santri.objects.filter(id__in=pool_santri_ids).annotate(
+            jumlah_lulus_di_fan=Count(
+                'riwayat_tes__sks',
+                distinct=True,
+                filter=Q(riwayat_tes__sks__fan=fan) & Q(riwayat_tes__nilai__gte=F('riwayat_tes__sks__nilai_minimal'))
+            )
+        ).order_by('-jumlah_lulus_di_fan', 'nama_lengkap') # Urutkan berdasarkan jumlah, lalu nama
+
         juara = peringkat_fan.first()
-        if juara:
+        if juara and juara.jumlah_lulus_di_fan > 0:
             juara_per_fan.append({'fan': fan, 'santri': juara, 'jumlah_lulus': juara.jumlah_lulus_di_fan})
-            
+    
+    today = date.today()
+    aktivitas_terkini = RiwayatTes.objects.filter(tanggal_tes=today).order_by('-id')[:5]
+
+    # --- LOGIKA BARU: MVP MINGGUAN (SABTU s/d KAMIS) ---
+    offset_to_last_thursday = (today.weekday() - 3) % 7
+    kamis_pekan_ini = today - timedelta(days=offset_to_last_thursday)
+    sabtu_awal_pekan = kamis_pekan_ini - timedelta(days=5)
+
     mvp_santri = Santri.objects.filter(
         status='Aktif',
-        riwayat_tes__tanggal_tes__gte=today - timedelta(days=7),
+        riwayat_tes__tanggal_tes__range=[sabtu_awal_pekan, kamis_pekan_ini],
+        riwayat_tes__nilai__gte=F('riwayat_tes__sks__nilai_minimal')
     ).annotate(
-        lulus_mingguan=Count('riwayat_tes', filter=Q(riwayat_tes__nilai__gte=F('riwayat_tes__sks__nilai_minimal')))
-    ).order_by('-lulus_mingguan').first()
-    
+    # Hitung jumlah tes yang lulus
+    lulus_mingguan=Count('riwayat_tes__id'),
+    # Cari tanggal kelulusan terakhir sebagai tie-breaker
+    tanggal_lulus_terakhir=Max('riwayat_tes__tanggal_tes')
+    ).order_by(
+    '-lulus_mingguan',      # 1. Urutkan berdasarkan jumlah lulus terbanyak
+    'tanggal_lulus_terakhir' # 2. Jika seri, urutkan berdasarkan tanggal tercepat
+    ).first()
+    # --- AKHIR LOGIKA BARU ---
 
     konteks = {
         'page_title': 'Dashboard Utama',
@@ -44,10 +89,11 @@ def daftar_santri(request):
         'total_sks': total_sks,
         'aktivitas_terkini': aktivitas_terkini,
         'juara_per_fan': juara_per_fan,
-        'mvp_santri': mvp_santri
+        'mvp_santri': mvp_santri,
+        'periode_mvp_start': sabtu_awal_pekan, # Opsional: kirim tanggal ke template
+        'periode_mvp_end': kamis_pekan_ini,   # Opsional: kirim tanggal ke template
     }
     return render(request, 'core/daftar_santri.html', konteks)
-
 # ==============================================================================
 # FUNGSI-FUNGSI LAIN YANG MUNGKIN HILANG
 # ==============================================================================
