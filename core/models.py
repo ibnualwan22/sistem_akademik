@@ -44,6 +44,25 @@ class Santri(models.Model):
             if tes.nilai >= tes.sks.nilai_minimal:
                 if tes.sks.id not in sks_lulus_ids: sks_lulus_ids.append(tes.sks.id)
         return sks_lulus_ids
+    def get_completed_fans_with_dates(self):
+        sks_lulus_ids = self.get_sks_lulus_ids()
+        if not sks_lulus_ids:
+            return {}
+        
+        # Semua logika ini seharusnya berada di dalam method ini
+        fan_completion_dates = {}
+        relevant_fans = Fan.objects.filter(sks_list__id__in=sks_lulus_ids).distinct()
+
+        for fan in relevant_fans:
+            sks_in_fan = fan.sks_list.all()
+            if all(sks.id in sks_lulus_ids for sks in sks_in_fan):
+                try:
+                    tgl_selesai = self.riwayat_tes.filter(sks__fan=fan).latest('tanggal_tes').tanggal_tes
+                    fan_completion_dates[fan] = tgl_selesai
+                except RiwayatTes.DoesNotExist:
+                    continue
+        
+        return fan_completion_dates    
 
 class RiwayatTes(models.Model):
     santri = models.ForeignKey(Santri, on_delete=models.CASCADE, related_name='riwayat_tes')
