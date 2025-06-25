@@ -1,7 +1,7 @@
 # core/views.py - VERSI LENGKAP DAN FINAL
 
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, Q, F, Max
+from django.db.models import Count, Q, F, Max, Min, Avg
 from .models import Santri, RiwayatTes, SKS, Fan, Pengurus
 from datetime import date, timedelta
 import json

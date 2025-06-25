@@ -20,30 +20,45 @@
                 </div>
 
                 <div class="col-md-9">
-                    <h2 class="mb-3">{{ santri.nama_lengkap }}</h2>
-                    <p><strong>ID Santri:</strong> {{ santri.id_santri|default:"-" }}</p>
-                    <p><strong>Status:</strong>
-                    {% if santri.status == 'Aktif' or santri.status == 'Pengurus' %}
-                        <span class="badge text-bg-success">{{ santri.get_status_display }}</span>
-                    {% else %}
-                        <span class="badge text-bg-danger">{{ santri.get_status_display }}</span>
-                    {% endif %}
-                </p>
-                    {% if fan_saat_ini %}
-                        <p class="mb-0"><strong>Fan Saat Ini:</strong> 
-                            <span class="badge {% if fan_saat_ini.nama_fan %}bg-primary{% else %}bg-success{% endif %} fs-6 rounded-pill">
-                                {% if fan_saat_ini.nama_fan %}
-                                    {{ fan_saat_ini.nama_fan }}
-                                {% else %}
-                                    {{ fan_saat_ini }}
-                                {% endif %}
-                            </span>
-                        </p>
-                    {% endif %}
-                </div>
-            </div>
+    <h2 class="mb-3">{{ santri.nama_lengkap }}</h2>
+    <div class="row">
+        <div class="col-lg-6">
+            <p><strong>ID Santri:</strong> {{ santri.id_santri|default:"-" }}</p>
+            <p><strong>Status:</strong>
+                {% if santri.status == 'Aktif' or santri.status == 'Pengurus' %}
+                    <span class="badge text-bg-success">{{ santri.get_status_display }}</span>
+                {% else %}
+                    <span class="badge text-bg-danger">{{ santri.get_status_display }}</span>
+                {% endif %}
+            </p>
+            <p><strong>Asal:</strong> {{ santri.alamat_kabupaten|default:"?" }}, {{ santri.alamat_provinsi|default:"?" }}</p>
+        </div>
+        <div class="col-lg-6">
+            <p><strong>Kelas Formal:</strong> {{ santri.kelas_sekolah|default:"-" }}</p>
+            <p><strong>Kamar:</strong> {{ santri.kamar|default:"-" }}</p>
+            <p><strong>Pembimbing:</strong>
+                {% if santri.pembimbing %}
+                    <a href="{% url 'core:detail_pengurus' santri.pembimbing.pk %}">
+                       <span class="badge text-bg-info">{{ santri.pembimbing.nama_lengkap }}</span>
+                    </a>
+                {% else %}
+                    -
+                {% endif %}
+            </p>
         </div>
     </div>
+    {% if fan_saat_ini %}
+        <p class="mb-0"><strong>Fan Saat Ini:</strong> 
+            <span class="badge {% if fan_saat_ini.nama_fan %}bg-primary{% else %}bg-success{% endif %} rounded-pill">
+                {% if fan_saat_ini.nama_fan %}
+                    {{ fan_saat_ini.nama_fan }}
+                {% else %}
+                    {{ fan_saat_ini }}
+                {% endif %}
+            </span>
+        </p>
+    {% endif %}
+</div>
 
 
     <div class="card mb-4">
