@@ -261,3 +261,10 @@ JAZZMIN_UI_TWEAKS = {
     },
     "custom_css": "core/static/core/css/jazzmin_custom.css"
 }
+
+# Pengaturan Durasi Sesi Login Otomatis
+# 30 menit * 60 detik = 1800 detik
+SESSION_COOKIE_AGE = 1800 
+
+# Ini akan me-reset timer setiap kali pengguna membuka halaman baru
+SESSION_SAVE_EVERY_REQUEST = True
