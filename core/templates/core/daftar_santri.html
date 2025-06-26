@@ -83,7 +83,16 @@
                             <small class="text-muted">{{ tes.tanggal_tes|date:"d M Y" }}</small>
                         </div>
                         <p class="mb-1 small">Mengikuti tes <strong>{{ tes.sks.nama_sks }}</strong></p>
-                        <small>Status: {% if tes.status_kelulusan == "Lulus" %}<span class="badge rounded-pill text-bg-success">Lulus</span>{% else %}<span class="badge rounded-pill text-bg-danger">Mengulang</span>{% endif %} (Nilai: <strong>{{ tes.nilai }}</strong>)</small>
+                        <small>Status: 
+                         {% if tes.status_kelulusan == "Lulus" %}
+                            <span class="badge rounded-pill text-bg-success">Lulus</span>
+                        {% elif tes.status_kelulusan == "Mengulang" %}
+                            <span class="badge rounded-pill text-bg-danger">Mengulang</span>
+                        {% else %}
+                            <span class="badge rounded-pill text-bg-secondary">{{ tes.status_kelulusan }}</span>
+                        {% endif %}
+                        (Nilai: <strong>{{ tes.nilai }}</strong>)
+                    </small>
                     </div>
                 {% empty %}
                     <p class="text-muted p-3">Belum ada aktivitas tes yang tercatat hari ini.</p>

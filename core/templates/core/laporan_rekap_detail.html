@@ -43,12 +43,19 @@
                         </td>
                         <td>
                             {% if "Lulus" in item.keterangan or "Sesuai" in item.keterangan or "Menyelesaikan" in item.keterangan %}
-                                <span class="badge bg-success">{{ item.keterangan }}</span>
-                            {% elif "Gugur" in item.keterangan or "Melebihi" in item.keterangan %}
-                                <span class="badge bg-danger">{{ item.keterangan }}</span>
-                            {% else %}
-                                <span class="badge bg-danger">{{ item.keterangan }}</span>
-                            {% endif %}
+        <span class="badge bg-success">{{ item.keterangan }}</span>
+
+    {% elif "Mengulang" in item.keterangan or "Melebihi" in item.keterangan %}
+        <span class="badge bg-danger">{{ item.keterangan }}</span>
+
+    {% elif "- Tes" in item.keterangan %}
+        {# Menggunakan warna biru (info) untuk status 'Terdaftar' agar tidak membingungkan #}
+        <span class="badge bg-warning">Baru Mendaftar{{ item.keterangan }}</span>
+
+    {% else %}
+        {# Default menggunakan warna sekunder untuk status lain yang tidak dikenal #}
+        <span class="badge bg-secondary">{{ item.keterangan }}</span>
+    {% endif %}
                         </td>
                         <td>{{ item.detail_objek }}</td>
                     </tr>
