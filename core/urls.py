@@ -25,4 +25,5 @@ urlpatterns = [
     path('pengurus/<int:pk>/', views.detail_pengurus_view, name='detail_pengurus'),
     path('riwayat-tes/export-excel/', views.export_tes_excel, name='export_tes_excel'),
     path('pengurus/', views.daftar_pengurus_view, name='daftar_pengurus'),
+    path('kontak/', views.daftar_kontak_view, name='daftar_kontak'),
 ]

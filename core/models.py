@@ -120,3 +120,31 @@ class RiwayatTes(models.Model):
     class Meta:
         # Isinya menjorok 8 spasi
         ordering = ['-tanggal_pelaksanaan', '-id']
+
+class GrupKontak(models.Model):
+    nama_grup = models.CharField(max_length=100, verbose_name="Nama Grup Kontak")
+    urutan = models.PositiveIntegerField(default=0, help_text="Grup dengan urutan lebih kecil akan tampil lebih dulu.")
+
+    class Meta:
+        verbose_name = "Grup Kontak"
+        verbose_name_plural = "Grup Kontak"
+        ordering = ['urutan']
+
+    def __str__(self):
+        return self.nama_grup
+
+class KontakPerson(models.Model):
+    grup = models.ForeignKey(GrupKontak, on_delete=models.CASCADE, related_name="kontak_list")
+    nama_lengkap = models.CharField(max_length=150)
+    keterangan = models.CharField(max_length=150, help_text="Contoh: Admin Pendaftaran, Informasi Umum")
+    nomor_whatsapp = models.CharField(max_length=20, blank=True, help_text="Format: 6281234567890")
+    email = models.EmailField(blank=True, null=True)
+    foto_profil = models.ImageField(upload_to='kontak_photos/', blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Kontak Person"
+        verbose_name_plural = "Kontak Person"
+        ordering = ['nama_lengkap']
+
+    def __str__(self):
+        return self.nama_lengkap

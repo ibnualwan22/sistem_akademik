@@ -16,7 +16,7 @@ from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 
 # Impor dari Aplikasi Lokal
-from .models import Santri, RiwayatTes, SKS, Fan, Pengurus
+from .models import Santri, RiwayatTes, SKS, Fan, Pengurus,GrupKontak, KontakPerson
 
 # Konfigurasi untuk Matplotlib di server non-GUI
 import matplotlib
@@ -38,10 +38,12 @@ logger = logging.getLogger(__name__)
 # core/views.py
 
 def daftar_santri(request):
-    """
-    Menampilkan halaman dashboard utama dengan ringkasan statistik,
-    juara per fan, dan MVP mingguan.
-    """
+    semua_kontak = KontakPerson.objects.all().select_related('grup')
+    kontak_grup = {}
+    for kontak in semua_kontak:
+        if kontak.grup.nama_grup not in kontak_grup:
+            kontak_grup[kontak.grup.nama_grup] = []
+        kontak_grup[kontak.grup.nama_grup].append(kontak)
     total_santri_aktif = Santri.objects.filter(status='Aktif').count()
     total_pengurus = Pengurus.objects.count()
     total_sks = SKS.objects.count()
@@ -99,6 +101,7 @@ def daftar_santri(request):
     ).order_by('-lulus_mingguan', 'tanggal_lulus_terakhir').first()
 
     konteks = {
+        'kontak_grup': kontak_grup,
         'page_title': 'Dashboard Utama',
         'total_santri_aktif': total_santri_aktif,
         'total_pengurus': total_pengurus,
@@ -644,3 +647,18 @@ def export_laporan_pdf(request):
         return response
     
     return HttpResponse(f"Terjadi kesalahan saat membuat PDF: {pdf.err}", status=500)
+# core/views.py
+
+def daftar_kontak_view(request):
+    semua_kontak = KontakPerson.objects.all().select_related('grup')
+    kontak_grup = {}
+    for kontak in semua_kontak:
+        if kontak.grup.nama_grup not in kontak_grup:
+            kontak_grup[kontak.grup.nama_grup] = []
+        kontak_grup[kontak.grup.nama_grup].append(kontak)
+        
+    konteks = {
+        'page_title': 'Contact Person',
+        'kontak_grup': kontak_grup,
+    }
+    return render(request, 'core/daftar_kontak.html', konteks)

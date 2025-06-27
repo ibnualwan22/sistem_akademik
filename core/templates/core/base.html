@@ -26,10 +26,13 @@
 
             <ul class="nav sidebar-nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'core:daftar_santri' %}"><i class="fas fa-home me-2"></i>Dashboard</a>
+                    <a class="nav-link" href="{% url 'core:daftar_santri' %}"><i class="fas fa-home me-2"></i>Halaman Utama</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'core:semua_santri' %}"><i class="fas fa-users me-2"></i>Daftar Santri</a>
+                </li>
+                <li class="nav-item">
+                     <a class="nav-link {% if 'pengurus' in request.path %}active{% endif %}" href="{% url 'core:daftar_pengurus' %}"><i class="bi bi-person-badge-fill me-2"></i>Pengurus Asrama</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'core:daftar_sks' %}"><i class="fas fa-list-alt me-2"></i>Daftar SKS</a>
@@ -44,8 +47,9 @@
                     <a class="nav-link" href="{% url 'core:riwayat_tes' %}"><i class="fas fa-history me-2"></i>Riwayat Tes</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if 'pengurus' in request.path %}active{% endif %}" href="{% url 'core:daftar_pengurus' %}"><i class="bi bi-person-badge-fill me-2"></i>Kepengurusan</a>
-                </li>
+                    <a class="nav-link {% if 'kontak' in request.path %}active{% endif %}" href="{% url 'core:daftar_kontak' %}"><i class="fas fa-address-book me-2"></i>Contact Person</a>
+                 </li>
+             </ul>
             </ul>
 
             <div class="mt-auto pt-3">

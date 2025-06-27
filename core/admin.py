@@ -5,7 +5,7 @@ from django.contrib.admin.models import LogEntry
 from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
-from .models import Fan, SKS, Santri, RiwayatTes, Pengurus
+from .models import Fan, SKS, Santri, RiwayatTes, Pengurus,GrupKontak, KontakPerson
 from datetime import date
 
 # ==========================================================================
@@ -146,3 +146,13 @@ class LogEntryAdmin(admin.ModelAdmin):
     def get_content_type(self, obj): return obj.content_type.name
     @admin.display(description='Aksi', ordering='action_flag')
     def get_action_description(self, obj): return {1: "➕ Penambahan", 2: "✏️ Perubahan", 3: "❌ Penghapusan"}.get(obj.action_flag, '-')
+
+@admin.register(GrupKontak)
+class GrupKontakAdmin(admin.ModelAdmin):
+    list_display = ('nama_grup', 'urutan')
+
+@admin.register(KontakPerson)
+class KontakPersonAdmin(admin.ModelAdmin):
+    list_display = ('nama_lengkap', 'grup', 'keterangan', 'nomor_whatsapp', 'email')
+    list_filter = ('grup',)
+    search_fields = ('nama_lengkap', 'keterangan')
