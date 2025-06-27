@@ -37,9 +37,9 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ item.tanggal_event|date:"d M Y" }}</td>
                         <td>
-                            <a href="{% url 'core:detail_santri' item.santri.pk %}">
-                                {{ item.santri.nama_lengkap }}
-                            </a>
+                            <a href="{% url 'core:detail_santri' item.santri.pk %}" style="color: #212529; text-decoration: none;">
+                            <strong>{{ item.santri.nama_lengkap }}</strong>
+                        </a>
                         </td>
                         <td>
                             {% if "Lulus" in item.keterangan or "Sesuai" in item.keterangan or "Menyelesaikan" in item.keterangan %}

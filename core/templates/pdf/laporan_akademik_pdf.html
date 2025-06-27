@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Akademik</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm 1.5cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 11pt;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            font-size: 14pt;
+            margin-bottom: 5px;
+            text-decoration: underline;
+            text-transform: uppercase;
+        }
+        h2 {
+            text-align: center;
+            font-size: 12pt;
+            font-weight: normal;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+        
+        /* Utility untuk memaksa pindah halaman */
+        .page-break {
+            page-break-before: always;
+        }
+
+        /* Kontainer utama untuk setiap bagian laporan */
+        .section-container {
+            width: 100%;
+            margin-bottom: 20px;
+            page-break-inside: avoid; /* Mencegah section terpotong di tengah halaman */
+        }
+        
+        /* Layout 2 kolom untuk diagram dan ringkasan */
+        .chart-column {
+            float: left;
+            width: 55%;
+            text-align: center;
+        }
+        .summary-column {
+            float: left;
+            width: 40%;
+            padding-left: 5%;
+        }
+        .chart-column img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Tabel untuk ringkasan dan rincian */
+        .detail-table {
+            clear: both;
+            padding-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 6px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #E7E6E6;
+            font-weight: bold;
+            text-align: center;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .font-bold {
+            font-weight: bold;
+        }
+
+        /* Membersihkan float */
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+    </style>
+</head>
+<body>
+    <div id="page-1">
+        <h1>Laporan Pencapaian Target</h1>
+        <h2>Periode: {{ start_date|date:"d M Y" }} &mdash; {{ end_date|date:"d M Y" }}</h2>
+
+        <div class="section-container clearfix">
+            <div class="chart-column">
+                <img src="data:image/png;base64,{{ pie_chart_base64 }}">
+            </div>
+            <div class="summary-column">
+                <p class="text-center font-bold" style="margin-top:20px;">RINGKASAN</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>KATEGORI</th>
+                            <th>JUMLAH KEJADIAN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Sesuai Target</td>
+                            <td class="text-center">{{ sesuai_target_count }}</td>
+                        </tr>
+                        <tr>
+                            <td>Melebihi Target</td>
+                            <td class="text-center">{{ melebihi_target_count }}</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">TOTAL SELESAI</td>
+                            <td class="text-center font-bold">{{ sesuai_target_count|add:melebihi_target_count }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="detail-table">
+            <p class="font-bold">RINCIAN DATA PENCAPAIAN TARGET</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:5%">NO</th>
+                        <th>NAMA SANTRI</th>
+                        <th style="width:30%">FAN YANG DISELESAIKAN</th>
+                        <th style="width:25%">KETERANGAN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sesuai_target_list %}
+                    <tr>
+                        <td class="text-center">{{ forloop.counter }}</td>
+                        <td>{{ item.santri.nama_lengkap }}</td>
+                        <td>{{ item.fan.nama_fan }}</td>
+                        <td class="text-center">{{ item.status }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for item in melebihi_target_list %}
+                    <tr>
+                        <td class="text-center">{{ sesuai_target_list|length|add:forloop.counter }}</td>
+                        <td>{{ item.santri.nama_lengkap }}</td>
+                        <td>{{ item.fan.nama_fan }}</td>
+                        <td class="text-center">{{ item.status }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not sesuai_target_list and not melebihi_target_list %}
+                    <tr><td colspan="4" class="text-center"><i>Tidak ada data pencapaian target pada periode ini.</i></td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div id="page-2">
+        <h1>Laporan Rekapitulasi Tes</h1>
+        <h2>Periode: {{ start_date|date:"d M Y" }} &mdash; {{ end_date|date:"d M Y" }}</h2>
+
+        <div class="section-container clearfix">
+            <div class="chart-column">
+                <img src="data:image/png;base64,{{ bar_chart_base64 }}">
+            </div>
+            <div class="summary-column">
+                <p class="text-center font-bold" style="margin-top:20px;">RINGKASAN</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>KATEGORI</th>
+                            <th>JUMLAH</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Total Tes Dilaksanakan</td>
+                            <td class="text-center">{{ total_tes }}</td>
+                        </tr>
+                        <tr>
+                            <td>Jumlah Lulus</td>
+                            <td class="text-center">{{ jumlah_lulus }}</td>
+                        </tr>
+                        <tr>
+                            <td>Jumlah Gugur / Mengulang</td>
+                            <td class="text-center">{{ jumlah_gugur }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+        </div>
+    </div>
+</body>
+</html>

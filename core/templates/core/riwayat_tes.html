@@ -161,44 +161,5 @@
         </table>
     </div>
 
-    <div class="mobile-cards">
-        {% for tes in riwayat_list %}
-        <div class="riwayat-card">
-            <div class="riwayat-card-header">
-                <div class="riwayat-card-title">{{ tes.santri.nama_lengkap }}</div>
-                <div>
-                    {% if tes.status_tes == 'Terdaftar' %}<span class="badge bg-info">Baru Mendaftar</span>
-                    {% elif tes.status_tes == 'Batal' %}<span class="badge bg-secondary">Dibatalkan</span>
-                    {% elif tes.status_kelulusan == "Lulus" %}<span class="badge bg-success">Lulus</span>
-                    {% else %}<span class="badge bg-danger">Mengulang</span>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="riwayat-card-body">
-                <div class="info-row">
-                    <span class="label">Tanggal:</span>
-                    <span class="value">{{ tes.tanggal_pelaksanaan|date:"d M Y" }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Kitab:</span>
-                    <span class="value">{{ tes.sks.nama_sks }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Fan:</span>
-                    <span class="value">{{ tes.sks.fan.nama_fan }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Nilai:</span>
-                    <span class="value"><strong>{{ tes.nilai|default:"-" }}</strong></span>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-            {% if not riwayat_list %}
-            <p class="text-center text-muted p-3">Tidak ada data riwayat tes yang cocok dengan filter ini.</p>
-            {% endif %}
-        {% endfor %}
-    </div>
-
 </div>
 {% endblock %}

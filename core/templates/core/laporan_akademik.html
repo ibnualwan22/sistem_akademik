@@ -29,8 +29,12 @@
     }
 </script>
 
-    <h1 class="mb-4">{{ page_title }}</h1>
-
+    <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">{{ page_title }}</h1>
+    <a href="{% url 'core:export_laporan_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger">
+        <i class="fas fa-file-pdf"></i> Ekspor Laporan ke PDF
+    </a>
+</div>
     <!-- GANTI BAGIAN FORM FILTER LAMA ANDA DENGAN INI -->
 <div class="card shadow-sm mb-4">
     <div class="card-body">
