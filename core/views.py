@@ -15,6 +15,16 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib import messages
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.cache import never_cache
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+
 # Impor dari Aplikasi Lokal
 from .models import Santri, RiwayatTes, SKS, Fan, Pengurus,GrupKontak, KontakPerson
 
@@ -662,3 +672,63 @@ def daftar_kontak_view(request):
         'kontak_grup': kontak_grup,
     }
     return render(request, 'core/daftar_kontak.html', konteks)
+
+@csrf_protect
+@never_cache
+def admin_login_view(request):
+    """
+    Custom admin login view dengan desain colorful
+    """
+    # Redirect jika sudah login
+    if request.user.is_authenticated and request.user.is_staff:
+        return redirect('/admin/')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            
+            if user is not None:
+                if user.is_staff or user.is_superuser:
+                    login(request, user)
+                    messages.success(request, f'Selamat datang kembali, {user.get_full_name() or user.username}!')
+                    # Redirect ke admin dashboard
+                    next_url = request.GET.get('next', '/admin/')
+                    return redirect(next_url)
+                else:
+                    messages.error(request, 'Anda tidak memiliki akses admin.')
+                    form = AuthenticationForm()  # Reset form
+            else:
+                messages.error(request, 'Username atau password salah.')
+        else:
+            messages.error(request, 'Mohon periksa kembali data yang Anda masukkan.')
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, 'core/admin_login.html', {'form': form})
+
+@login_required
+def admin_dashboard(request):
+    """
+    Dashboard admin setelah login
+    """
+    if not request.user.is_staff:
+        messages.error(request, 'Akses ditolak.')
+        return redirect('core:admin_login')
+    
+    context = {
+        'user': request.user,
+        'title': 'Dashboard Admin',
+        'total_users': 0,  # Tambahkan data sesuai kebutuhan
+        'total_santri': 0,
+        'total_kelas': 0,
+    }
+    return render(request, 'admin/dashboard.html', context)
+
+def custom_admin_login(request):
+    """
+    Override default Django admin login
+    """
+    return admin_login_view(request)

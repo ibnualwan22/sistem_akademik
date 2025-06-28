@@ -268,3 +268,7 @@ SESSION_COOKIE_AGE = 1800
 
 # Ini akan me-reset timer setiap kali pengguna membuka halaman baru
 SESSION_SAVE_EVERY_REQUEST = True
+
+LOGIN_URL = '/admin/login/'
+LOGIN_REDIRECT_URL = '/admin/'
+LOGOUT_REDIRECT_URL = '/admin/login/'

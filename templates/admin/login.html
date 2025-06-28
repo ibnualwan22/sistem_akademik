@@ -1,175 +1,507 @@
-{% extends "admin/base_site.html" %}
-{% load i18n static %}
-
-{% block extrastyle %}
-    {{ block.super }}
-    {# Muat file CSS custom kita #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - Sistem Akademik</title>
     <link rel="stylesheet" href="{% static 'core/css/admin_login.css' %}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
 
-      <style>
-        /* Menambahkan sedikit style agar form Django menyatu dengan template */
-        #login-form input[type="text"],
-        #login-form input[type="password"] {
-            display: block;
-            width: 100%;
-            padding: .375rem .75rem;
-            font-size: 1rem;
-            font-weight: 400;
-            line-height: 1.5;
-            color: #212529;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            border-radius: .25rem;
-            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        #login-form input[type="text"]:focus,
-        #login-form input[type="password"]:focus {
-            color: #212529;
-            background-color: #fff;
-            border-color: #86b7fe;
-            outline: 0;
-            box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, 
+                #667eea 0%, 
+                #764ba2 25%, 
+                #f093fb 50%, 
+                #f5576c 75%, 
+                #4facfe 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Elements */
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            width: 80px;
+            height: 80px;
+            background: #fff;
+            border-radius: 50%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            top: 20%;
+            right: 10%;
+            width: 60px;
+            height: 60px;
+            background: #ffeb3b;
+            transform: rotate(45deg);
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            bottom: 20%;
+            left: 15%;
+            width: 100px;
+            height: 100px;
+            background: #00bcd4;
+            border-radius: 20px;
+            animation-delay: 4s;
+        }
+
+        .shape:nth-child(4) {
+            bottom: 30%;
+            right: 20%;
+            width: 70px;
+            height: 70px;
+            background: #ff9800;
+            border-radius: 50%;
+            animation-delay: 1s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            z-index: 10;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .site-title {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .nav-icons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-icon {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .nav-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 420px;
+            animation: slideUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffd93d);
+            background-size: 300% 100%;
+            animation: colorWave 3s ease infinite;
+        }
+
+        @keyframes colorWave {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            animation: logoFloat 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .logo::before {
+            content: '🌍';
+            font-size: 35px;
+            position: absolute;
+        }
+
+        .logo::after {
+            content: '📚';
+            font-size: 20px;
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            background: #fff;
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        .login-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-input::placeholder {
+            color: #aaa;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 20px;
+                padding: 30px 25px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .site-title {
+                font-size: 1rem;
+            }
+        }
+
+        /* Additional colorful elements */
+        .color-dots {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .dot:nth-child(1) {
+            background: #ff6b6b;
+            animation-delay: 0s;
+        }
+
+        .dot:nth-child(2) {
+            background: #4ecdc4;
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            background: #45b7d1;
+            animation-delay: 0.4s;
+        }
+
+        .dot:nth-child(4) {
+            background: #ffd93d;
+            animation-delay: 0.6s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
         }
     </style>
-{% endblock %}
-
-{% block bodyclass %}{{ block.super }} login{% endblock %}
-
-{% block usertools %}{% endblock %}
-{% block nav-global %}{% endblock %}
-{% block nav-sidebar %}{% endblock %}
-
-{% block content %}
-<section class="h-100">
-    <div class="container h-100">
-        <div class="row justify-content-sm-center h-100 align-items-center">
-            <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
-                <div class="text-center my-5">
-                    {# Ganti path ini dengan path logo Anda di folder static #}
-                    <img src="{% static 'core/images/Takhossus.png' %}" alt="logo" width="100">
-                </div>
-                <div class="card shadow-lg">
-                    <div class="card-body p-5">
-                        <h1 class="fs-4 card-title fw-bold mb-4 text-center">Login Admin</h1>
-
-                        {# --- FORM LOGIN DARI DJANGO --- #}
-                        <form action="{{ app_path }}" method="post" id="login-form" autocomplete="off">
-                            {% csrf_token %}
-
-                            {# Menampilkan error jika login gagal #}
-                            {% if form.errors and not form.non_field_errors %}
-                                <p class="alert alert-danger p-2 text-center">
-                                {% blocktrans trimmed %}
-                                    Nama pengguna atau sandi salah. Silakan coba lagi.
-                                {% endblocktrans %}
-                                </p>
-                            {% endif %}
-                            {% if form.non_field_errors %}
-                                {% for error in form.non_field_errors %}
-                                <p class="alert alert-danger p-2 text-center">
-                                    {{ error }}
-                                </p>
-                                {% endfor %}
-                            {% endif %}
-
-                            <!-- Username input -->
-                            <div class="mb-3">
-                                <label class="mb-2 text-muted" for="{{ form.username.id_for_label }}">Nama Pengguna</label>
-                                {{ form.username }}
-                            </div>
-
-                            <!-- Password input -->
-                            <div class="mb-3">
-                                <label class="text-muted" for="{{ form.password.id_for_label }}">Sandi</label>
-                                {{ form.password }}
-                                <input type="hidden" name="next" value="{{ next }}">
-                            </div>
-
-                            <div class="d-flex align-items-center mt-4">
-                                <button type="submit" class="btn btn-primary ms-auto w-100">
-                                    Masuk
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div class="text-center mt-5 text-muted">
-                    Copyright &copy; 2025 &mdash; Sistem Akademik Takhossus
-                </div>
-            </div>
+</head>
+<body>
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
         </div>
+    {% endif %}
+
+    <div class="floating-shapes">
+        <div class="shape"></div><div class="shape"></div><div class="shape"></div><div class="shape"></div>
     </div>
-</section>
-<!-- <section class="background-radial-gradient overflow-hidden">
-  <div class="container px-4 py-5 px-md-5 text-center text-lg-start my-5">
-    <div class="row gx-lg-5 align-items-center mb-5">
-      <div class="col-lg-6 mb-5 mb-lg-0" style="z-index: 10">
-        {# --- Ganti Teks Sambutan --- #}
-        <h1 class="my-5 display-5 fw-bold ls-tight" style="color: hsl(218, 81%, 95%)">
-          Sistem Akademik <br />
-          <span style="color: hsl(218, 81%, 75%)">Takhossus</span>
-        </h1>
-        <p class="mb-4 opacity-70" style="color: hsl(218, 81%, 85%)">
-          Silakan masuk untuk mengelola data akademik. Halaman ini didesain untuk
-          memberikan pengalaman administrasi yang aman dan efisien.
-        </p>
-      </div>
 
-      <div class="col-lg-6 mb-5 mb-lg-0 position-relative">
-        <div id="radius-shape-1" class="position-absolute rounded-circle shadow-5-strong"></div>
-        <div id="radius-shape-2" class="position-absolute shadow-5-strong"></div>
+    <header class="header">
+        <div class="logo-section">
+            <button class="menu-btn">☰</button>
+            <span class="site-title">Sistem Akademik</span>
+        </div>
+        <div class="nav-icons">
+            <button class="nav-icon">⚙️</button><button class="nav-icon">👤</button>
+        </div>
+    </header>
 
-        <div class="card bg-glass">
-          <div class="card-body px-4 py-5 px-md-5">
+    <main class="main-content">
+        <div class="login-container">
+            <div class="color-dots">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            
+            <div class="logo-container">
+                <img src="{% static 'core/images/Takhossus.png' %}" alt="Logo Takhossus" class="logo">
+                <h1 class="login-title">Login Admin</h1>
+                <p class="login-subtitle">Sistem Akademik Takhossus</p>
+            </div>
 
-            {# --- INI ADALAH FORM DARI DJANGO --- #}
-            <form action="{{ app_path }}" method="post" id="login-form">
+            <form method="post">
                 {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_username">Nama Pengguna</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user icon"></i>
+                        <input 
+                            type="text" 
+                            name="username"
+                            id="id_username"
+                            class="form-input{% if form.username.errors %} error{% endif %}" 
+                            placeholder="Masukkan nama pengguna"
+                            value="{{ form.username.value|default_if_none:'' }}"
+                            required
+                        >
+                    </div>
+                    {% for error in form.username.errors %}<small class="error-text">{{ error }}</small>{% endfor %}
+                </div>
 
-                <h4 class="mb-4 text-center">Administrasi Django</h4>
-
-                {# Menampilkan error jika login gagal #}
-                {% if form.errors and not form.non_field_errors %}
-                    <p class="errornote text-danger text-center mb-3">
-                    {% blocktrans trimmed %}
-                    Please correct the error below.
-                    {% endblocktrans %}
-                    </p>
-                {% endif %}
+                <div class="form-group">
+                    <label class="form-label" for="id_password">Kata Sandi</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock icon"></i>
+                        <input 
+                            type="password" 
+                            name="password"
+                            id="id_password"
+                            class="form-input{% if form.password.errors %} error{% endif %}" 
+                            placeholder="Masukkan kata sandi"
+                            required
+                        >
+                    </div>
+                    {% for error in form.password.errors %}<small class="error-text">{{ error }}</small>{% endfor %}
+                </div>
 
                 {% if form.non_field_errors %}
-                    {% for error in form.non_field_errors %}
-                    <p class="errornote text-danger text-center mb-3">
-                        {{ error }}
-                    </p>
-                    {% endfor %}
+                    <div class="non-field-errors">
+                        {% for error in form.non_field_errors %}<small class="error-text">{{ error }}</small>{% endfor %}
+                    </div>
                 {% endif %}
 
-                <div class="form-outline mb-4">
-                    <label class="form-label" for="{{ form.username.id_for_label }}">Nama pengguna:</label>
-                    {{ form.username }}
-                </div>
-
-                <div class="form-outline mb-4">
-                    <label class="form-label" for="{{ form.password.id_for_label }}">Sandi:</label>
-                    {{ form.password }}
-                    <input type="hidden" name="next" value="{{ next }}">
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block mb-4 w-100">
-                    Masuk
-                </button>
-
+                <button type="submit" class="login-btn">Masuk</button>
             </form>
-          </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section> -->
-{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>Copyright © {% now "Y" %} — Sistem Akademik Takhossus</p>
+    </footer>
+
+    <script src="{% static 'core/js/admin_login.js' %}"></script>
+</body>
+</html>

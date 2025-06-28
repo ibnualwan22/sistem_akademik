@@ -9,6 +9,7 @@ app_name = 'core'
 
 urlpatterns = [
     # Setiap path memanggil fungsi yang benar dari 'views'
+    path('accounts/login/', views.admin_login_view, name='login'),
     path('', views.daftar_santri, name='daftar_santri'),
     path('semua/', views.semua_santri_view, name='semua_santri'),
     path('sks/', views.daftar_sks_view, name='daftar_sks'),
@@ -26,4 +27,6 @@ urlpatterns = [
     path('riwayat-tes/export-excel/', views.export_tes_excel, name='export_tes_excel'),
     path('pengurus/', views.daftar_pengurus_view, name='daftar_pengurus'),
     path('kontak/', views.daftar_kontak_view, name='daftar_kontak'),
+    path('admin/login/', views.admin_login_view, name='admin_login'),
+    path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard')
 ]
