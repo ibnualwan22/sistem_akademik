@@ -1,21 +1,22 @@
-# Lokasi file: sistem_akademik/urls.py
+# sistem_akademik/urls.py
 
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings               # <-- TAMBAHKAN IMPORT INI
-from django.conf.urls.static import static   # <-- TAMBAHKAN IMPORT INI
-from django.views.generic import RedirectView
-
+from django.conf import settings
+from django.conf.urls.static import static
+from core.views import asrama_login_view, asrama_logout_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('santri/', include('core.urls')),
-    path('',RedirectView.as_view(url='/santri/',permanent=False))
-    
+
+    # PASTIKAN HANYA ADA SATU BARIS 'include' UNTUK 'core.urls'
+    path('app/', include('core.urls')),
+
+    # URL untuk login dan logout
+    path('', asrama_login_view, name='asrama_login'),
+    path('logout/', asrama_logout_view, name='asrama_logout'),
 ]
 
-# --- TAMBAHKAN BLOK INI DI PALING BAWAH ---
-# Ini hanya untuk mode development (DEBUG=True)
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,81 +1,15 @@
-# core/admin.py - VERSI FINAL YANG RAPI DAN BENAR
+# core/admin.py
 
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
-from django.http import HttpResponse
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment
-from .models import Fan, SKS, Santri, RiwayatTes, Pengurus,GrupKontak, KontakPerson
 from datetime import date
 
-# ==========================================================================
-# FUNGSI UNTUK ADMIN ACTION (didefinisikan di luar kelas)
-# ==========================================================================
-def export_as_excel(modeladmin, request, queryset):
-    """
-    Aksi admin untuk mengekspor data RiwayatTes yang dipilih ke format Excel,
-    dikelompokkan per penguji.
-    """
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    )
-    response['Content-Disposition'] = f'attachment; filename="rekap_tes_{date.today().isoformat()}.xlsx"'
-    workbook = Workbook()
+from .models import (
+    Asrama, UserProfile, Fan, SKS, Santri,
+    RiwayatTes, Pengurus, GrupKontak, KontakPerson
+)
 
-    tes_by_examiner = {}
-    for tes in queryset.order_by('penguji__nama_lengkap', 'santri__nama_lengkap'):
-        penguji_nama = tes.penguji.nama_lengkap if tes.penguji else "Tanpa Penguji"
-        if penguji_nama not in tes_by_examiner:
-            tes_by_examiner[penguji_nama] = []
-        tes_by_examiner[penguji_nama].append(tes)
-
-    if 'Sheet' in workbook.sheetnames:
-        workbook.remove(workbook['Sheet'])
-
-    header_font = Font(bold=True)
-    center_align = Alignment(horizontal='center', vertical='center')
-
-    for penguji, tes_list in tes_by_examiner.items():
-        worksheet = workbook.create_sheet(title=penguji[:31])
-        worksheet.merge_cells('A1:E1')
-        worksheet['A1'] = 'REKAP PENDAFTARAN TES ASRAMA TAKHOSSUS'
-        worksheet['A1'].font = Font(bold=True, size=14)
-        worksheet['A1'].alignment = center_align
-        worksheet.merge_cells('A2:E2')
-        worksheet['A2'] = f"PENGUJI : {penguji.upper()}"
-        worksheet['A2'].font = header_font
-        if tes_list:
-            tanggal_tes = tes_list[0].tanggal_pelaksanaan.strftime('%d %B %Y')
-            worksheet.merge_cells('A3:E3')
-            worksheet['A3'] = f"Tanggal : {tanggal_tes}"
-        
-        headers = ['NO', 'NAMA PESERTA', 'KITAB', 'NILAI', 'KETERANGAN']
-        worksheet.append(headers)
-        for cell in worksheet[5]:
-            cell.font = header_font
-            cell.alignment = center_align
-
-        for i, tes in enumerate(tes_list, 1):
-            keterangan = "-"
-            if tes.status_tes == 'Terdaftar': keterangan = 'Baru Mendaftar'
-            elif tes.nilai is not None: keterangan = tes.status_kelulusan
-            row_data = [i, tes.santri.nama_lengkap, tes.sks.nama_sks, tes.nilai if tes.nilai is not None else '', keterangan]
-            worksheet.append(row_data)
-            worksheet.cell(row=worksheet.max_row, column=1).alignment = Alignment(horizontal='center')
-        
-        for col, width in [('A', 5), ('B', 35), ('C', 35), ('D', 10), ('E', 20)]:
-            worksheet.column_dimensions[col].width = width
-            
-    workbook.save(response)
-    return response
-
-export_as_excel.short_description = "Ekspor Data Terpilih ke Excel (per Penguji)"
-
-
-# ==========================================================================
-# KELAS-KELAS ADMIN
-# ==========================================================================
-
+# KELAS FILTER KUSTOM (jika ada, seperti StatusKelulusanFilter)
 class StatusKelulusanFilter(admin.SimpleListFilter):
     title = 'Status Kelulusan'
     parameter_name = 'status_kelulusan'
@@ -84,58 +18,136 @@ class StatusKelulusanFilter(admin.SimpleListFilter):
         if self.value() == 'lulus': return queryset.filter(id__in=[tes.id for tes in queryset if tes.status_kelulusan == 'Lulus'])
         if self.value() == 'mengulang': return queryset.filter(id__in=[tes.id for tes in queryset if tes.status_kelulusan == 'Mengulang'])
 
+# KELAS DASAR KEBIJAKAN ABAC UNTUK ADMIN
+class AsramaScopedAdmin(admin.ModelAdmin):
+    def get_exclude(self, request, obj=None):
+        if not request.user.is_superuser:
+            return ['asrama']
+        return super().get_exclude(request, obj)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        try:
+            return qs.filter(asrama=request.user.profile.asrama)
+        except (UserProfile.DoesNotExist, AttributeError):
+            return qs.none()
+
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser:
+            try:
+                if not obj.asrama_id:
+                    obj.asrama = request.user.profile.asrama
+            except (UserProfile.DoesNotExist, AttributeError):
+                pass
+        super().save_model(request, obj, form, change)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if not request.user.is_superuser:
+            try:
+                asrama_pengguna = request.user.profile.asrama
+                if hasattr(db_field.related_model, 'asrama'):
+                    kwargs['queryset'] = db_field.related_model.objects.filter(asrama=asrama_pengguna)
+            except (UserProfile.DoesNotExist, AttributeError):
+                kwargs['queryset'] = db_field.related_model.objects.none()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+# PENDAFTARAN MODEL-MODEL KE ADMIN PANEL
+@admin.register(Asrama)
+class AsramaAdmin(admin.ModelAdmin):
+    list_display = ('nama_asrama', 'id_asrama_unik', 'is_active')
+    search_fields = ('nama_asrama', 'id_asrama_unik')
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'asrama')
+    list_filter = ('asrama',)
+    autocomplete_fields = ('user', 'asrama')
+
 @admin.register(Fan)
-class FanAdmin(admin.ModelAdmin):
-    list_display = ('nama_fan', 'urutan', 'target_durasi_hari')
+class FanAdmin(AsramaScopedAdmin):
+    list_display = ('nama_fan', 'urutan', 'target_durasi_hari', 'asrama')
     search_fields = ('nama_fan',)
     ordering = ('urutan',)
+    def get_list_filter(self, request):
+        if request.user.is_superuser:
+            return ('asrama',)
+        return ()
 
 @admin.register(SKS)
-class SKSAdmin(admin.ModelAdmin):
-    list_display = ('nama_sks', 'fan', 'nilai_minimal')
-    list_filter = ('fan',)
+class SKSAdmin(AsramaScopedAdmin):
+    list_display = ('nama_sks', 'fan', 'nilai_minimal', 'asrama')
     search_fields = ('nama_sks',)
     autocomplete_fields = ('fan',)
+    list_filter = ('fan',)
+    def get_list_filter(self, request):
+        base_filters = list(super().get_list_filter(request))
+        if request.user.is_superuser:
+            base_filters.append('asrama')
+        return tuple(base_filters)
 
 @admin.register(Santri)
-class SantriAdmin(admin.ModelAdmin):
-    list_display = ('nama_lengkap', 'id_santri', 'status')
-    list_filter = ('status',)
+class SantriAdmin(AsramaScopedAdmin):
+    list_display = ('nama_lengkap', 'id_santri', 'status', 'asrama')
     search_fields = ('nama_lengkap', 'id_santri')
     list_per_page = 20
+    autocomplete_fields = ('pembimbing',)
+    list_filter = ('status',)
+    def get_list_filter(self, request):
+        base_filters = list(super().get_list_filter(request))
+        if request.user.is_superuser:
+            base_filters.append('asrama')
+        return tuple(base_filters)
 
 @admin.register(RiwayatTes)
-class RiwayatTesAdmin(admin.ModelAdmin):
-    list_display = ('get_nama_santri', 'get_nama_sks', 'tanggal_pelaksanaan', 'penguji', 'nilai', 'status_tes', 'status_kelulusan')
+class RiwayatTesAdmin(AsramaScopedAdmin):
+    list_display = ('get_nama_santri', 'get_nama_sks', 'tanggal_pelaksanaan', 'penguji', 'status_tes', 'status_kelulusan')
     list_filter = ('status_tes', 'tanggal_pelaksanaan', 'sks__fan', 'penguji', StatusKelulusanFilter)
     search_fields = ('santri__nama_lengkap', 'sks__nama_sks', 'penguji__nama_lengkap')
     autocomplete_fields = ('santri', 'sks', 'penguji')
-    list_per_page = 25
-    fieldsets = (
-        ('Informasi Pendaftaran', {'fields': ('santri', 'sks', 'penguji', 'tanggal_pelaksanaan')}),
-        ('Status & Penilaian', {'fields': ('status_tes', 'nilai', 'tanggal_pendaftaran')}),
-    )
-    actions = [export_as_excel]
-
-    # --- METHOD-METHOD INI HARUS BERADA DI DALAM KELAS ---
-    def get_changeform_initial_data(self, request):
-        return {'tanggal_pendaftaran': date.today()}
-
+    def get_list_filter(self, request):
+        base_filters = list(super().get_list_filter(request))
+        if request.user.is_superuser:
+            base_filters.insert(0, ('sks__fan__asrama', admin.RelatedOnlyFieldListFilter))
+        return tuple(base_filters)
     @admin.display(description='Nama Santri', ordering='santri__nama_lengkap')
-    def get_nama_santri(self, obj):
-        return obj.santri.nama_lengkap
-
+    def get_nama_santri(self, obj): return obj.santri.nama_lengkap
     @admin.display(description='SKS / Kitab', ordering='sks__nama_sks')
-    def get_nama_sks(self, obj):
-        return obj.sks.nama_sks
+    def get_nama_sks(self, obj): return obj.sks.nama_sks
 
 @admin.register(Pengurus)
-class PengurusAdmin(admin.ModelAdmin):
-    list_display = ('nama_lengkap', 'jabatan', 'nomor_whatsapp')
+class PengurusAdmin(AsramaScopedAdmin):
+    list_display = ('nama_lengkap', 'jabatan', 'nomor_whatsapp', 'asrama')
     search_fields = ('nama_lengkap', 'jabatan')
+    def get_list_filter(self, request):
+        if request.user.is_superuser:
+            return ('asrama',)
+        return ()
 
+@admin.register(GrupKontak)
+class GrupKontakAdmin(AsramaScopedAdmin):
+    list_display = ('nama_grup', 'urutan', 'asrama')
+    search_fields = ('nama_grup',)
+    def get_list_filter(self, request):
+        if request.user.is_superuser:
+            return ('asrama',)
+        return ()
+
+@admin.register(KontakPerson)
+class KontakPersonAdmin(AsramaScopedAdmin):
+    list_display = ('nama_lengkap', 'grup', 'keterangan', 'nomor_whatsapp', 'email', 'asrama')
+    search_fields = ('nama_lengkap', 'keterangan')
+    autocomplete_fields = ('grup',)
+    list_filter = ('grup',)
+    def get_list_filter(self, request):
+        base_filters = list(super().get_list_filter(request))
+        if request.user.is_superuser:
+            base_filters.append(('grup__asrama', admin.RelatedOnlyFieldListFilter))
+        return tuple(base_filters)
+    
 @admin.register(LogEntry)
-class LogEntryAdmin(admin.ModelAdmin):
+class LogEntryAdmin(AsramaScopedAdmin):
     readonly_fields = ('action_time', 'user', 'content_type', 'object_id', 'object_repr', 'action_flag', 'change_message')
     list_display = ('action_time', 'user', 'get_action_description', 'object_repr', 'get_content_type')
     list_filter = ('action_time', 'user', 'content_type')
@@ -146,13 +158,3 @@ class LogEntryAdmin(admin.ModelAdmin):
     def get_content_type(self, obj): return obj.content_type.name
     @admin.display(description='Aksi', ordering='action_flag')
     def get_action_description(self, obj): return {1: "➕ Penambahan", 2: "✏️ Perubahan", 3: "❌ Penghapusan"}.get(obj.action_flag, '-')
-
-@admin.register(GrupKontak)
-class GrupKontakAdmin(admin.ModelAdmin):
-    list_display = ('nama_grup', 'urutan')
-
-@admin.register(KontakPerson)
-class KontakPersonAdmin(admin.ModelAdmin):
-    list_display = ('nama_lengkap', 'grup', 'keterangan', 'nomor_whatsapp', 'email')
-    list_filter = ('grup',)
-    search_fields = ('nama_lengkap', 'keterangan')

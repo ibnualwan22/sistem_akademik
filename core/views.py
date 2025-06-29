@@ -17,7 +17,7 @@ from xhtml2pdf import pisa
 
 
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_protect
@@ -26,7 +26,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
 # Impor dari Aplikasi Lokal
-from .models import Santri, RiwayatTes, SKS, Fan, Pengurus,GrupKontak, KontakPerson
+from .models import Asrama,Santri, RiwayatTes, SKS, Fan, Pengurus,GrupKontak, KontakPerson
+from functools import wraps
 
 # Konfigurasi untuk Matplotlib di server non-GUI
 import matplotlib
@@ -36,50 +37,116 @@ import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
 # ==============================================================================
-# FUNGSI 1: DASHBOARD UTAMA (daftar_santri)
+# "PENJAGA" ABAC (DECORATOR)
 # ==============================================================================
-# Ganti seluruh fungsi daftar_santri Anda dengan ini
+def asrama_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if 'asrama_id' not in request.session:
+            messages.error(request, 'Sesi asrama tidak ditemukan. Silakan login kembali.')
+            return redirect('asrama_login')
+        try:
+            request.asrama = Asrama.objects.get(id=request.session['asrama_id'])
+        except Asrama.DoesNotExist:
+            del request.session['asrama_id']
+            messages.error(request, 'Asrama tidak lagi valid. Silakan login kembali.')
+            return redirect('asrama_login')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
-# Ganti seluruh fungsi daftar_santri Anda dengan ini
-
+# ==============================================================================
+# LOGIKA GERBANG AKSES (LOGIN/LOGOUT)
+# ==============================================================================
 # core/views.py
 
-# GANTI SELURUH FUNGSI daftar_santri ANDA DENGAN VERSI INI
-# core/views.py
+def asrama_login_view(request):
+    """
+    [VERSI BARU] View ini hanya menggunakan username dan password.
+    Asrama ditentukan dari profil pengguna yang berhasil login.
+    """
+    if request.user.is_authenticated and 'asrama_id' in request.session:
+        return redirect('core:daftar_santri')
 
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        # 1. Autentikasi pengguna seperti biasa
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None and user.is_active:
+            try:
+                # 2. Ambil atribut 'asrama' dari profil pengguna
+                asrama_pengguna = user.profile.asrama
+
+                if asrama_pengguna and asrama_pengguna.is_active:
+                    # 3. Jika berhasil, login dan simpan sesi asrama
+                    login(request, user)
+                    request.session['asrama_id'] = asrama_pengguna.id
+                    request.session['asrama_nama'] = asrama_pengguna.nama_asrama
+                    return redirect('core:daftar_santri')
+                else:
+                    # Kasus jika profil ada, tapi asrama tidak ada atau tidak aktif
+                    messages.error(request, 'Akun Anda tidak terhubung ke asrama yang valid atau aktif.')
+
+            except user._meta.model.profile.RelatedObjectDoesNotExist:
+                # Kasus jika pengguna ada TAPI admin belum membuatkan UserProfile untuknya
+                messages.error(request, 'Profil untuk akun ini tidak ditemukan. Hubungi administrator.')
+
+        else:
+            messages.error(request, 'Username atau Password salah.')
+
+        return redirect('asrama_login')
+
+    return render(request, 'core/asrama_login.html')
+
+def asrama_logout_view(request):
+    logout(request)
+    messages.success(request, 'Anda telah berhasil logout.')
+    return redirect('asrama_login')
+
+
+# ==============================================================================
+# VIEWS UTAMA DENGAN FILTER ABAC
+# ==============================================================================
+
+@asrama_required
 def daftar_santri(request):
-    semua_kontak = KontakPerson.objects.all().select_related('grup')
+    asrama = request.asrama
+    
+    # [FIXED] Filter semua query berdasarkan asrama
+    semua_kontak = KontakPerson.objects.filter(asrama=asrama).select_related('grup')
     kontak_grup = {}
     for kontak in semua_kontak:
         if kontak.grup.nama_grup not in kontak_grup:
             kontak_grup[kontak.grup.nama_grup] = []
         kontak_grup[kontak.grup.nama_grup].append(kontak)
-    total_santri_aktif = Santri.objects.filter(status='Aktif').count()
-    total_pengurus = Pengurus.objects.count()
-    total_sks = SKS.objects.count()
-    semua_fan = Fan.objects.all().order_by('urutan')
+        
+    total_santri_aktif = Santri.objects.filter(asrama=asrama, status='Aktif').count()
+    total_pengurus = Pengurus.objects.filter(asrama=asrama).count()
+    total_sks = SKS.objects.filter(asrama=asrama).count()
+    semua_fan = Fan.objects.filter(asrama=asrama).order_by('urutan')
     
-    # Menentukan Fan saat ini untuk setiap santri aktif
     santri_per_fan_pool = {fan.id: [] for fan in semua_fan}
-    for santri in Santri.objects.filter(status='Aktif'):
+    # [FIXED] Filter santri berdasarkan asrama
+    for santri in Santri.objects.filter(asrama=asrama, status='Aktif'):
         sks_lulus_ids = santri.get_sks_lulus_ids()
         fan_saat_ini_santri = None
         for fan in semua_fan:
-            sks_dalam_fan = SKS.objects.filter(fan=fan)
+            sks_dalam_fan = SKS.objects.filter(asrama=asrama, fan=fan)
             if sks_dalam_fan.exists() and sks_dalam_fan.filter(id__in=sks_lulus_ids).count() < sks_dalam_fan.count():
                 fan_saat_ini_santri = fan
                 break
         if fan_saat_ini_santri:
             santri_per_fan_pool[fan_saat_ini_santri.id].append(santri.id)
 
-    # Mencari juara dari setiap kelompok/pool fan
     juara_per_fan = []
     for fan in semua_fan:
         pool_santri_ids = santri_per_fan_pool.get(fan.id, [])
         if not pool_santri_ids:
             continue
         
-        peringkat_fan = Santri.objects.filter(id__in=pool_santri_ids).annotate(
+        peringkat_fan = Santri.objects.filter(asrama=asrama, id__in=pool_santri_ids).annotate(
             jumlah_lulus_di_fan=Count(
                 'riwayat_tes__sks',
                 distinct=True,
@@ -91,16 +158,14 @@ def daftar_santri(request):
         if juara and juara.jumlah_lulus_di_fan > 0:
             juara_per_fan.append({'fan': fan, 'santri': juara, 'jumlah_lulus': juara.jumlah_lulus_di_fan})
     
-    # Aktivitas terkini
     today = date.today()
-    aktivitas_terkini = RiwayatTes.objects.filter(tanggal_pelaksanaan=today, status_tes='Selesai').order_by('-id')[:5]
+    aktivitas_terkini = RiwayatTes.objects.filter(asrama=asrama, tanggal_pelaksanaan=today, status_tes='Selesai').order_by('-id')[:5]
 
-    # Logika MVP (Most Valuable Person) mingguan
     offset_to_last_thursday = (today.weekday() - 3) % 7
     kamis_pekan_ini = today - timedelta(days=offset_to_last_thursday)
     sabtu_awal_pekan = kamis_pekan_ini - timedelta(days=5)
-
     mvp_santri = Santri.objects.filter(
+        asrama=asrama,
         status='Aktif',
         riwayat_tes__tanggal_pelaksanaan__range=[sabtu_awal_pekan, kamis_pekan_ini],
         riwayat_tes__nilai__gte=F('riwayat_tes__sks__nilai_minimal'),
@@ -111,6 +176,7 @@ def daftar_santri(request):
     ).order_by('-lulus_mingguan', 'tanggal_lulus_terakhir').first()
 
     konteks = {
+        'asrama_nama': asrama.nama_asrama,
         'kontak_grup': kontak_grup,
         'page_title': 'Dashboard Utama',
         'total_santri_aktif': total_santri_aktif,
@@ -126,35 +192,36 @@ def daftar_santri(request):
 # ==============================================================================
 # FUNGSI-FUNGSI LAIN YANG MUNGKIN HILANG
 # ==============================================================================
+@asrama_required
 def semua_santri_view(request):
-    """Menampilkan daftar semua santri berdasarkan statusnya, dengan fitur pencarian."""
+    asrama = request.asrama
     query = request.GET.get('q', '')
     
-    base_queryset = Santri.objects.all()
+    # [FIXED] Filter berdasarkan asrama terlebih dahulu
+    base_queryset = Santri.objects.filter(asrama=asrama)
     if query:
         base_queryset = base_queryset.filter(nama_lengkap__icontains=query)
-
     santri_aktif_list = base_queryset.filter(status='Aktif').order_by('nama_lengkap')
     santri_lulus_list = base_queryset.filter(status='Pengurus').order_by('nama_lengkap')
     santri_nonaktif_list = base_queryset.filter(status='Non-Aktif').order_by('nama_lengkap')
     
     konteks = {
+        'asrama_nama': asrama.nama_asrama,
         'page_title': 'Daftar Lengkap Santri',
-        'santri_aktif_list': santri_aktif_list,
-        'santri_lulus_list': santri_lulus_list,
-        'santri_nonaktif_list': santri_nonaktif_list,
+        'santri_aktif_list': base_queryset.filter(status='Aktif').order_by('nama_lengkap'),
+        'santri_lulus_list': base_queryset.filter(status='Pengurus').order_by('nama_lengkap'),
+        'santri_nonaktif_list': base_queryset.filter(status='Non-Aktif').order_by('nama_lengkap'),
     }
     return render(request, 'core/semua_santri.html', konteks)
 
+@asrama_required
 def detail_santri(request, pk):
-    """Menampilkan halaman profil detail seorang santri."""
-    santri = get_object_or_404(Santri, pk=pk)
-    # ... (Logika kompleks di sini, biarkan seperti kode asli Anda karena fungsionalitasnya spesifik) ...
-    # Pastikan untuk meninjau kembali logika perhitungan durasi di sini jika ingin disamakan dengan laporan.
-    # Kode asli Anda:
-    semua_tes_santri = santri.riwayat_tes.select_related('sks__fan').all()
-    semua_fan = Fan.objects.all().order_by('urutan')
+    asrama = request.asrama
+    # [FIXED & SECURE] Filter berdasarkan PK dan Asrama
+    santri = get_object_or_404(Santri, pk=pk, asrama=asrama)
+    semua_fan = Fan.objects.filter(asrama=asrama).order_by('urutan')
     sks_lulus_ids = santri.get_sks_lulus_ids()
+    semua_tes_santri = santri.riwayat_tes.select_related('sks__fan').all()
     fan_completion_dates = santri.get_completed_fans_with_dates()
     
     progress_per_fan = []
@@ -207,6 +274,7 @@ def detail_santri(request, pk):
         
     konteks = {
         'page_title': f'Profil {santri.nama_lengkap}',
+        'asrama_nama': asrama.nama_asrama,
         'santri': santri,
         'progress_per_fan': progress_per_fan,
         'semua_tes': semua_tes_santri.order_by('-tanggal_pelaksanaan'),
@@ -214,9 +282,11 @@ def detail_santri(request, pk):
     }
     return render(request, 'core/detail_santri.html', konteks)
 
+@asrama_required
 def detail_fan_santri(request, santri_pk, fan_pk):
-    santri = get_object_or_404(Santri, pk=santri_pk)
-    fan = get_object_or_404(Fan, pk=fan_pk)
+    asrama = request.asrama
+    santri = get_object_or_404(Santri, pk=santri_pk, asrama=asrama)
+    fan = get_object_or_404(Fan, pk=fan_pk, asrama=asrama)
     sks_lulus_ids = santri.get_sks_lulus_ids()
     sks_dalam_fan = SKS.objects.filter(fan=fan)
     sks_lulus = sks_dalam_fan.filter(id__in=sks_lulus_ids)
@@ -224,32 +294,33 @@ def detail_fan_santri(request, santri_pk, fan_pk):
     konteks = { 'santri': santri, 'fan': fan, 'sks_lulus': sks_lulus, 'sks_belum_lulus': sks_belum_lulus, 'page_title': f'Detail SKS {fan.nama_fan} - {santri.nama_lengkap}'}
     return render(request, 'core/detail_fan_santri.html', konteks)
 
+@asrama_required
 def leaderboard_fan_view(request, fan_pk):
-    fan = get_object_or_404(Fan, pk=fan_pk)
-    peringkat_santri = Santri.objects.filter(status='Aktif').annotate(
+    asrama = request.asrama
+    # [FIXED & SECURE]
+    fan = get_object_or_404(Fan, pk=fan_pk, asrama=asrama)
+    peringkat_santri = Santri.objects.filter(asrama=asrama, status='Aktif').annotate(
         jumlah_lulus_di_fan=Count('riwayat_tes__sks', distinct=True, filter=Q(riwayat_tes__sks__fan=fan) & Q(riwayat_tes__nilai__gte=F('riwayat_tes__sks__nilai_minimal')))
     ).filter(jumlah_lulus_di_fan__gt=0).order_by('-jumlah_lulus_di_fan', 'id')[:5]
     konteks = { 'fan': fan, 'peringkat_santri': peringkat_santri, 'page_title': f'Peringkat Teratas - {fan.nama_fan}'}
     return render(request, 'core/leaderboard_fan.html', konteks)
 
+@asrama_required
 def kurikulum_view(request):
     konteks = {'page_title': 'Kurikulum Asrama Takhossus'}
     return render(request, 'core/kurikulum.html', konteks)
 
+@asrama_required
 def daftar_sks_view(request):
-    semua_sks = SKS.objects.select_related('fan').order_by('fan__urutan', 'nama_sks')
+    asrama = request.asrama
+    # [FIXED]
+    semua_sks = SKS.objects.filter(asrama=asrama).select_related('fan').order_by('fan__urutan', 'nama_sks')
     konteks = { 'page_title': 'Daftar SKS Kurikulum', 'semua_sks': semua_sks }
     return render(request, 'core/daftar_sks.html', konteks)
 
-# ==============================================================================
-# FUNGSI-FUNGSI BARU DAN YANG SUDAH DIPERBAIKI
-# ==============================================================================
-# GANTI FUNGSI INI DENGAN VERSI BARU YANG LEBIH BERSIH
+@asrama_required
 def laporan_akademik(request):
-    """
-    Menampilkan halaman laporan akademik di web dengan filter.
-    Logika perhitungan sudah diperbaiki dan disamakan dengan PDF.
-    """
+    asrama = request.asrama
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
     selected_fan_id = request.GET.get('fan_id')
@@ -263,11 +334,12 @@ def laporan_akademik(request):
 
     # Query dasar tes yang relevan
     tes_selesai_query = RiwayatTes.objects.filter(
+        asrama=asrama,
         tanggal_pelaksanaan__range=[start_date, end_date],
         status_tes='Selesai'
     )
     # Ambil santri yang relevan
-    santri_query = Santri.objects.filter(riwayat_tes__in=tes_selesai_query).distinct()
+    santri_query = Santri.objects.filter(asrama=asrama, riwayat_tes__in=tes_selesai_query).distinct()
     
     if selected_fan_id and selected_fan_id.isdigit():
         santri_query = santri_query.filter(riwayat_tes__sks__fan_id=selected_fan_id).distinct()
@@ -299,10 +371,11 @@ def laporan_akademik(request):
     jumlah_gugur = total_tes - jumlah_lulus
 
     konteks = {
+        'asrama_nama': asrama.nama_asrama,
         'page_title': 'Laporan Rekapitulasi Tes',
         'start_date': start_date.isoformat(),
         'end_date': end_date.isoformat(),
-        'all_fans': Fan.objects.all().order_by('urutan'),
+        'all_fans': Fan.objects.filter(asrama=asrama).order_by('urutan'),
         'selected_fan_id': selected_fan_id,
         'labels_target_json': json.dumps(['Sesuai Target', 'Melebihi Target']),
         'data_target_json': json.dumps([sesuai_target_count, melebihi_target_count]),
@@ -403,10 +476,9 @@ def laporan_rekap_detail(request):
 
 # core/views.py
 
+@asrama_required
 def riwayat_tes_view(request):
-    """
-    Menampilkan halaman riwayat tes global dengan filter tanggal, fan, dan status.
-    """
+    asrama = request.asrama
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
     selected_fan_id = request.GET.get('fan_id')
@@ -419,8 +491,7 @@ def riwayat_tes_view(request):
         end_date = date.today()
         start_date = end_date - timedelta(days=365)
 
-    riwayat_list = RiwayatTes.objects.select_related('santri', 'sks', 'sks__fan').filter(tanggal_pelaksanaan__range=[start_date, end_date])
-
+    riwayat_list = RiwayatTes.objects.filter(asrama=asrama, tanggal_pelaksanaan__range=[start_date, end_date])
     if selected_fan_id and selected_fan_id.isdigit():
         riwayat_list = riwayat_list.filter(sks__fan_id=selected_fan_id)
 
@@ -435,7 +506,7 @@ def riwayat_tes_view(request):
         'page_title': 'Riwayat Tes Santri',
         # PENTING: .distinct() untuk mencegah duplikasi data
         'riwayat_list': riwayat_list.order_by('-tanggal_pelaksanaan', '-id').distinct(),
-        'all_fans': Fan.objects.all().order_by('urutan'),
+        'all_fans': Fan.objects.filter(asrama=asrama).order_by('urutan'),
         'start_date': start_date.isoformat(),
         'end_date': end_date.isoformat(),
         'selected_fan_id': selected_fan_id,
@@ -445,16 +516,22 @@ def riwayat_tes_view(request):
 
 # Tambahkan dua fungsi ini di views.py
 
+@asrama_required
 def daftar_pengurus_view(request):
-    semua_pengurus = Pengurus.objects.all().order_by('nama_lengkap')
+    asrama = request.asrama
+    # [FIXED]
+    semua_pengurus = Pengurus.objects.filter(asrama=asrama).order_by('nama_lengkap')
     konteks = {
         'page_title': 'Struktur Kepengurusan',
         'semua_pengurus': semua_pengurus
     }
     return render(request, 'core/daftar_pengurus.html', konteks)
 
+@asrama_required
 def detail_pengurus_view(request, pk):
-    pengurus = get_object_or_404(Pengurus, pk=pk)
+    asrama = request.asrama
+    # [FIXED & SECURE]
+    pengurus = get_object_or_404(Pengurus, pk=pk, asrama=asrama)
     konteks = {
         'page_title': f'Profil Pengurus: {pengurus.nama_lengkap}',
         'pengurus': pengurus
@@ -462,8 +539,9 @@ def detail_pengurus_view(request, pk):
     return render(request, 'core/detail_pengurus.html', konteks)
 
 # core/views.py
-
+@asrama_required
 def export_tes_excel(request):
+    asrama = request.asrama
     """
     Mengekspor data Riwayat Tes yang sudah difilter ke dalam format file Excel (.xlsx).
     """
@@ -690,25 +768,28 @@ def admin_login_view(request):
             password = form.cleaned_data.get('password')
             user = authenticate(username=username, password=password)
             
-            if user is not None:
-                if user.is_staff or user.is_superuser:
+            # [PERUBAHAN DI SINI] Ubah 'user.is_staff' menjadi 'user.is_active'
+        if user is not None and user.is_active:
+            try:
+                asrama_pengguna = user.profile.asrama
+                
+                if asrama_pengguna and asrama_pengguna.is_active:
                     login(request, user)
-                    messages.success(request, f'Selamat datang kembali, {user.get_full_name() or user.username}!')
-                    # Redirect ke admin dashboard
-                    next_url = request.GET.get('next', '/admin/')
-                    return redirect(next_url)
+                    request.session['asrama_id'] = asrama_pengguna.id
+                    request.session['asrama_nama'] = asrama_pengguna.nama_asrama
+                    return redirect('core:daftar_santri')
                 else:
-                    messages.error(request, 'Anda tidak memiliki akses admin.')
-                    form = AuthenticationForm()  # Reset form
-            else:
-                messages.error(request, 'Username atau password salah.')
-        else:
-            messages.error(request, 'Mohon periksa kembali data yang Anda masukkan.')
-    else:
-        form = AuthenticationForm()
-    
-    return render(request, 'core/admin_login.html', {'form': form})
+                    messages.error(request, 'Akun Anda tidak terhubung ke asrama yang valid atau aktif.')
+            
+            except user._meta.model.profile.RelatedObjectDoesNotExist:
+                messages.error(request, 'Profil untuk akun ini tidak ditemukan. Hubungi administrator.')
 
+        else:
+            messages.error(request, 'Username atau Password salah, atau akun Anda tidak aktif.')
+
+        return redirect('asrama_login')
+        
+    return render(request, 'core/asrama_login.html')
 @login_required
 def admin_dashboard(request):
     """
@@ -732,3 +813,11 @@ def custom_admin_login(request):
     Override default Django admin login
     """
     return admin_login_view(request)
+# core/views.py
+
+def asrama_logout_view(request):
+    # Hapus sesi dan data login pengguna
+    logout(request)
+
+    # Tampilkan halaman konfirmasi logout
+    return render(request, 'core/logout_done.html')

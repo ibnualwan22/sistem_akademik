@@ -269,6 +269,13 @@ SESSION_COOKIE_AGE = 1800
 # Ini akan me-reset timer setiap kali pengguna membuka halaman baru
 SESSION_SAVE_EVERY_REQUEST = True
 
-LOGIN_URL = '/admin/login/'
-LOGIN_REDIRECT_URL = '/admin/'
-LOGOUT_REDIRECT_URL = '/admin/login/'
+# settings.py
+
+# URL yang dituju jika pengguna belum login
+LOGIN_URL = 'asrama_login' 
+
+# URL yang dituju setelah pengguna berhasil login
+LOGIN_REDIRECT_URL = 'core:daftar_santri' 
+
+# URL yang dituju setelah pengguna berhasil logout
+LOGOUT_REDIRECT_URL = 'asrama_login'
