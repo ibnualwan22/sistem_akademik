@@ -4,7 +4,7 @@
 {% block title %}Dashboard Utama{% endblock %}
 
 {% block content %}
-    <h1 class="mb-4">Sistem Akademik Takhossus Pasca Amtsilati</h1>
+    <h1 class="mb-4">Sistem Akademik {{ request.session.asrama_nama }}</h1>
 
     <div class="row mb-5">
         <div class="col-lg-4 mb-3 card-link-wrapper">
@@ -35,7 +35,7 @@
     {% if mvp_santri %}
     <div class="card text-center bg-warning-subtle border-warning mb-5 shadow-sm">
         <div class="card-header">
-            <strong>⭐ MVP Santri Takhossus Pekan Ini ⭐</strong>
+            <strong>⭐ MVP Santri {{ request.session.asrama_nama }} Pekan Ini ⭐</strong>
         </div>
         <div class="card-body">
             {% if mvp_santri.foto_profil %}
@@ -56,7 +56,7 @@
 
     <div class="row mt-4">
         <div class="col-md-7">
-            <h4>Leaderboard Asrama Takhossus</h4>
+            <h4>Leaderboard {{ request.session.asrama_nama }}</h4>
             <p class="text-muted small">Santri terbaik di setiap Fan berdasarkan jumlah SKS terbanyak dan tercepat.</p>
             <div class="list-group">
                 {% for data in juara_per_fan %}

@@ -84,6 +84,12 @@ def asrama_login_view(request):
                     login(request, user)
                     request.session['asrama_id'] = asrama_pengguna.id
                     request.session['asrama_nama'] = asrama_pengguna.nama_asrama
+                    request.session['asrama_logo_url'] = asrama_pengguna.logo.url if asrama_pengguna.logo else None
+                    request.session['asrama_kata_pengantar'] = asrama_pengguna.kata_pengantar
+                    request.session['asrama_link_instagram'] = asrama_pengguna.link_instagram
+                    request.session['asrama_link_youtube'] = asrama_pengguna.link_youtube
+                    request.session['asrama_link_whatsapp'] = asrama_pengguna.link_whatsapp
+                    request.session['asrama_link_tiktok'] = asrama_pengguna.link_tiktok
                     return redirect('core:daftar_santri')
                 else:
                     # Kasus jika profil ada, tapi asrama tidak ada atau tidak aktif
@@ -178,7 +184,7 @@ def daftar_santri(request):
     konteks = {
         'asrama_nama': asrama.nama_asrama,
         'kontak_grup': kontak_grup,
-        'page_title': 'Dashboard Utama',
+        'page_title': f'Dashboard - {asrama.nama_asrama}',
         'total_santri_aktif': total_santri_aktif,
         'total_pengurus': total_pengurus,
         'total_sks': total_sks,
@@ -307,7 +313,8 @@ def leaderboard_fan_view(request, fan_pk):
 
 @asrama_required
 def kurikulum_view(request):
-    konteks = {'page_title': 'Kurikulum Asrama Takhossus'}
+    asrama = request.asrama
+    konteks = {'page_title': f'Kurikulum Asrama { asrama.nama_asrama }',}
     return render(request, 'core/kurikulum.html', konteks)
 
 @asrama_required
@@ -315,7 +322,7 @@ def daftar_sks_view(request):
     asrama = request.asrama
     # [FIXED]
     semua_sks = SKS.objects.filter(asrama=asrama).select_related('fan').order_by('fan__urutan', 'nama_sks')
-    konteks = { 'page_title': 'Daftar SKS Kurikulum', 'semua_sks': semua_sks }
+    konteks = { 'page_title': f'Daftar SKS Kurikulum { asrama.nama_asrama }', 'semua_sks': semua_sks }
     return render(request, 'core/daftar_sks.html', konteks)
 
 @asrama_required
@@ -503,7 +510,7 @@ def riwayat_tes_view(request):
         selected_status = 'Selesai'
 
     konteks = {
-        'page_title': 'Riwayat Tes Santri',
+        'page_title': f'Riwayat Tes Santri { asrama.nama_asrama }',
         # PENTING: .distinct() untuk mencegah duplikasi data
         'riwayat_list': riwayat_list.order_by('-tanggal_pelaksanaan', '-id').distinct(),
         'all_fans': Fan.objects.filter(asrama=asrama).order_by('urutan'),
@@ -522,7 +529,7 @@ def daftar_pengurus_view(request):
     # [FIXED]
     semua_pengurus = Pengurus.objects.filter(asrama=asrama).order_by('nama_lengkap')
     konteks = {
-        'page_title': 'Struktur Kepengurusan',
+        'page_title': f'Struktur Kepengurusan { asrama.nama_asrama }',
         'semua_pengurus': semua_pengurus
     }
     return render(request, 'core/daftar_pengurus.html', konteks)

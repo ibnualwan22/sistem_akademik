@@ -10,8 +10,14 @@ from django.utils import timezone
 class Asrama(models.Model):
     nama_asrama = models.CharField(max_length=150, unique=True, verbose_name="Nama Asrama")
     id_asrama_unik = models.CharField(max_length=50, unique=True, help_text="ID unik untuk login, contoh: takhossus_pusat")
+    logo = models.ImageField(upload_to='asrama_logos/', blank=True, null=True, verbose_name="Logo Asrama")
     alamat = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True, verbose_name="Aktif")
+    kata_pengantar = models.TextField(blank=True, null=True, verbose_name="Kata Pengantar Singkat")
+    link_instagram = models.URLField(max_length=200, blank=True, null=True, verbose_name="Link Instagram")
+    link_youtube = models.URLField(max_length=255, blank=True, null=True, verbose_name="Link YouTube")
+    link_whatsapp = models.URLField(max_length=255, blank=True, null=True, verbose_name="Link WhatsApp (wa.me)")
+    link_tiktok = models.URLField(max_length=255, blank=True, null=True, verbose_name="Link TikTok")
 
     def __str__(self):
         return self.nama_asrama

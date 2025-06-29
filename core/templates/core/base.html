@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sistem Akademik Takhossus{% endblock %}</title>
+    <title>{% block title %}Sistem Akademik {{ request.session.asrama_nama }}{% endblock %}</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     
@@ -19,11 +19,6 @@
     <div class="page-wrapper">
 
         <aside class="main-sidebar">
-            <a class="sidebar-brand" href="{% url 'core:daftar_santri' %}">
-                <img src="{% static 'core/images/Takhossus.png' %}" alt="Logo" width="30" height="30" class="me-2">
-                <span>Takhossus</span>
-            </a>
-
             <ul class="nav sidebar-nav flex-column">
 
                 {% if user.is_authenticated %}
@@ -31,7 +26,9 @@
                     <div class="text-white">
                         <span style="font-size: 0.8rem;">Selamat Datang,</span><br>
                         <strong class="text-uppercase">{{ user.username }}</strong>
-
+                        {% if request.session.asrama_nama %}
+                            <div class="badge bg-light text-dark fw-normal mt-1">{{ request.session.asrama_nama }}</div>
+                        {% endif %}
                     </div>
                 </li>
                 <hr class="sidebar-divider">
@@ -80,7 +77,13 @@
                 <button class="btn" id="sidebar-toggle-btn">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h3 class="ms-3">{% block page_title %}Dashboard{% endblock %}</h3>
+                 <h3>{% if request.session.asrama_logo_url %}
+                        <img src="{{ request.session.asrama_logo_url }}" alt="Logo {{ request.session.asrama_nama }}" width="30" height="30" class="me-2">
+                     {% else %}
+                         <img src="{% static 'core/images/Takhossus.png' %}" alt="Logo" width="30" height="30" class="me-2">
+                    {% endif %}
+                        <span>{{ request.session.asrama_nama | default:'Takhossus' }}</span>
+                    </h3>
             </header>
 
             <main class="container-fluid py-4">
@@ -91,7 +94,7 @@
             <footer class="bg-dark text-white mt-auto py-4">
                 <div class="container-fluid"> <div class="row">
                         <div class="col-md-5 mb-3">
-                            <h5>Takhossus Pasca Amtsilati</h5>
+                            <h5>{{ request.session.asrama_nama }}</h5>
                             <p class="small text-white-50">
                                 Adalah Asrama khusus lulusan Amtsilati yang sedang dalam
                                 masa jenjang Madrasah Aliyah atau lebih, difokuskan untuk
@@ -108,14 +111,33 @@
                             </p>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <h5>Media Sosial</h5>
-                            <div>
-                                <a href="https://www.youtube.com/@TakhossusPascaAmtsilati" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-youtube"></i></a>
-                                <a href="https://www.instagram.com/takhossus_/" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-instagram"></i></a>
-                                <a href="https://wa.me/6281227225453" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-whatsapp"></i></a>
-                                <a href="https://www.tiktok.com/@NAMA_TIKTOK_ANDA" target="_blank" class="text-white fs-4"><i class="fab fa-tiktok"></i></a>
-                            </div>
+                             <h5>Media Sosial</h5>
+                             <div>
+                            {% if request.session.asrama_link_youtube %}
+                                <a href="{{ request.session.asrama_link_youtube }}" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-youtube"></i></a>
+                            {% else %}
+                                <a href="#" class="text-white-50 me-3 fs-4" style="pointer-events: none;"><i class="fab fa-youtube"></i></a>
+                            {% endif %}
+
+                            {% if request.session.asrama_link_instagram %}
+                                <a href="{{ request.session.asrama_link_instagram }}" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-instagram"></i></a>
+                           {% else %}
+                                <a href="#" class="text-white-50 me-3 fs-4" style="pointer-events: none;"><i class="fab fa-instagram"></i></a>
+                           {% endif %}
+
+                            {% if request.session.asrama_link_whatsapp %}
+                                <a href="{{ request.session.asrama_link_whatsapp }}" target="_blank" class="text-white me-3 fs-4"><i class="fab fa-whatsapp"></i></a>
+                            {% else %}
+                                <a href="#" class="text-white-50 me-3 fs-4" style="pointer-events: none;"><i class="fab fa-whatsapp"></i></a>
+                            {% endif %}
+
+                            {% if request.session.asrama_link_tiktok %}
+                                <a href="{{ request.session.asrama_link_tiktok }}" target="_blank" class="text-white fs-4"><i class="fab fa-tiktok"></i></a>
+                            {% else %}
+                                <a href="#" class="text-white-50 fs-4" style="pointer-events: none;"><i class="fab fa-tiktok"></i></a>
+                            {% endif %}
                         </div>
+                    </div>
                     </div>
                     <hr class="mt-3">
                     <div class="row">
