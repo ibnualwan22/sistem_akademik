@@ -60,6 +60,8 @@ class SKS(models.Model):
 class Pengurus(models.Model):
     asrama = models.ForeignKey(Asrama, on_delete=models.CASCADE, related_name='pengurus_list', null=True)
     nama_lengkap = models.CharField(max_length=150, verbose_name="Nama Lengkap")
+    alamat_kabupaten = models.CharField(max_length=100, blank=True, null=True, verbose_name="Kabupaten/Kota")
+    alamat_provinsi = models.CharField(max_length=100, blank=True, null=True, verbose_name="Provinsi")
     jabatan = models.CharField(max_length=100, blank=True, verbose_name="Jabatan")
     nomor_whatsapp = models.CharField(max_length=20, blank=True, help_text="Gunakan format internasional, contoh: 6281234567890")
     foto_profil = models.ImageField(upload_to='pengurus_photos/', blank=True, null=True)
@@ -74,6 +76,10 @@ class Santri(models.Model):
     STATUS_CHOICES = [('Aktif', 'Santri Aktif'), ('Pengurus', 'Pengurus/Abdi Dalem'), ('Non-Aktif', 'Non-Aktif/Lulusan')]
     nama_lengkap = models.CharField(max_length=150)
     id_santri = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="ID Santri")
+    alamat_kabupaten = models.CharField(max_length=100, blank=True, null=True, verbose_name="Kabupaten/Kota")
+    alamat_provinsi = models.CharField(max_length=100, blank=True, null=True, verbose_name="Provinsi")
+    kamar = models.CharField(max_length=50, blank=True, null=True)
+    kelas_sekolah = models.CharField(max_length=100, blank=True, null=True, verbose_name="Kelas Sekolah Formal")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Aktif')
     foto_profil = models.ImageField(upload_to='santri_photos/', blank=True, null=True)
     pembimbing = models.ForeignKey(Pengurus, on_delete=models.SET_NULL, null=True, blank=True, related_name='santri_bimbingan')
