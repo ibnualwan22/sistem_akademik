@@ -6,21 +6,61 @@
 {% block content %}
 <div class="row">
     {% for pengurus in semua_pengurus %}
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100 text-center shadow-sm">
-            <div class="card-body">
-                <a href="{% url 'core:detail_pengurus' pengurus.pk %}" class="text-decoration-none text-dark">
-                    {% if pengurus.foto_profil %}
-                        <img src="{{ pengurus.foto_profil.url }}" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
-                    {% else %}
-                        <img src="{% static 'core/images/default.png' %}" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
-                    {% endif %}
-                    <h5 class="card-title">{{ pengurus.nama_lengkap }}</h5>
-                    <p class="card-text text-muted">{{ pengurus.jabatan }}</p>
-                </a>
+    <!-- Update card pengurus -->
+<div class="col-md-6 col-lg-4 mb-4">
+    <div class="card h-100 text-center shadow-sm pengurus-card">
+        <div class="card-body">
+            <div class="image-wrapper">
+                {% if pengurus.foto_profil %}
+                    <img src="{{ pengurus.foto_profil.url }}" class="rounded-circle mb-3" 
+                         style="width: 120px; height: 120px; object-fit: cover;">
+                {% else %}
+                    <img src="{% static 'core/images/default.png' %}" class="rounded-circle mb-3" 
+                         style="width: 120px; height: 120px; object-fit: cover;">
+                {% endif %}
+                <div class="image-overlay">
+                    <i class="fas fa-user-tie"></i>
+                </div>
             </div>
+            <h5 class="card-title">{{ pengurus.nama_lengkap }}</h5>
+            <p class="card-text text-muted">{{ pengurus.jabatan }}</p>
         </div>
     </div>
+</div>
+
+<style>
+.pengurus-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.pengurus-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+}
+.image-wrapper {
+    position: relative;
+    display: inline-block;
+}
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(102, 126, 234, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: white;
+    font-size: 2rem;
+}
+.pengurus-card:hover .image-overlay {
+    opacity: 1;
+}
+</style>
     {% empty %}
     <p>Belum ada data pengurus yang ditambahkan.</p>
     {% endfor %}

@@ -62,8 +62,33 @@
             </div>
             {# Menambahkan tombol submit #}
             <div class="col-12 mt-3">
-                <button type="submit" class="btn btn-primary w-100">Terapkan Filter</button>
-            </div>
+                <!-- Update button terapkan filter -->
+<button type="submit" class="btn btn-primary w-100 filter-btn">
+    <i class="fas fa-filter me-2"></i>Terapkan Filter
+</button>
+
+<style>
+.filter-btn {
+    position: relative;
+    overflow: hidden;
+}
+.filter-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+.filter-btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+</style>
         </form>
     </div>
 </div>

@@ -8,12 +8,33 @@
         
         <h1 class="mb-0">{{ page_title }}</h1>
         
-        <form method="GET" action="{% url 'core:semua_santri' %}" class="w-50">
-            <div class="input-group">
-                <input type="text" name="q" class="form-control" placeholder="Cari nama santri..." value="{{ request.GET.q }}">
-                <button class="btn btn-primary" type="submit">Cari</button>
-            </div>
-        </form>
+        <!-- Ganti search form dengan ini -->
+<form method="GET" action="{% url 'core:semua_santri' %}" class="w-50">
+    <div class="input-group search-box">
+        <span class="input-group-text bg-white border-0">
+            <i class="fas fa-search text-muted"></i>
+        </span>
+        <input type="text" name="q" class="form-control border-0" 
+               placeholder="Cari nama santri..." 
+               value="{{ request.GET.q }}">
+        <button class="btn btn-primary" type="submit">
+            <i class="fas fa-arrow-right"></i> Cari
+        </button>
+    </div>
+</form>
+
+<style>
+.search-box {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    border-radius: 50px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.search-box:focus-within {
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
+}
+</style>
 
     </div>
     <ul class="nav nav-tabs" id="myTab" role="tablist">
